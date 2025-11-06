@@ -1,16 +1,13 @@
 // --- 1. Configuration ---
 
 /**
- * New data structure: APPROVED_CALCULATOR_MAP
- * This Map stores the "normalized" model (all caps, no special chars)
- * as the KEY, and the "full display name" (Brand + Model) as the VALUE.
- * This allows us to check for the model while ignoring the brand,
- * but still display the brand in the success message.
- *
- * Data is populated from the SEAB PDF (Updated 31st October 2024).
+ * APPROVED_CALCULATOR_MAP
+ * Key: Normalized model (all caps, no special chars)
+ * Value: Full display name (Brand + Model)
+ * Data populated from the SEAB PDF (Updated 31st October 2024).
  */
 const APPROVED_CALCULATOR_MAP = new Map([
-    // --- Page 2: Current Scientific  ---
+    // --- Page 2: Current Scientific ---
     ['FX82MS', 'CASIO FX 82MS'],
     ['FX85MS', 'CASIO FX 85MS'],
     ['FX95MS', 'CASIO FX 95MS'],
@@ -22,12 +19,12 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['ELW531SII', 'SHARP EL W531S II'],
     ['ELW531SIISILVEREDITION', 'SHARP EL W531S II Silver Edition'],
 
-    // --- Page 2: Current Graphing [cite: 73] ---
+    // --- Page 2: Current Graphing ---
     ['FX9860GILS', 'CASIO FX-9860GIls'],
     ['TI84PLUSCE', 'TEXAS INSTRUMENTS TI-84 Plus CE'],
     ['TI84PLUSCEPYTHON', 'TEXAS INSTRUMENTS TI-84 Plus CE Python'],
 
-    // --- Page 3: Previously Approved CASIO [cite: 79] ---
+    // --- Page 3: Previously Approved CASIO ---
     ['FX82AU', 'CASIO FX 82AU'],
     ['FX82C', 'CASIO FX 82C'],
     ['FX82D', 'CASIO FX 82D'],
@@ -82,7 +79,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['FX992V', 'CASIO FX 992V'],
     ['FX992VB', 'CASIO FX 992VB'],
 
-    // --- Page 3: Previously Approved CANON [cite: 81] ---
+    // --- Page 3: Previously Approved CANON ---
     ['F200', 'CANON F 200'],
     ['F401', 'CANON F 401'],
     ['F402', 'CANON F 402'],
@@ -96,7 +93,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['F715S', 'CANON F 715S'],
     ['F720', 'CANON F 720'],
 
-    // --- Page 3: Previously Approved SHARP [cite: 83] ---
+    // --- Page 3: Previously Approved SHARP ---
     ['EL506L', 'SHARP EL 506L'],
     ['EL509G', 'SHARP EL 509G'],
     ['EL509L', 'SHARP EL 509L'],
@@ -130,7 +127,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['ELW531XM', 'SHARP EL W531XM'],
     ['EL533X', 'SHARP EL 533X'],
 
-    // --- Page 3: Previously Approved TEXAS INSTRUMENTS [cite: 86] ---
+    // --- Page 3: Previously Approved TEXAS INSTRUMENTS ---
     ['BAIIPIUS', 'TEXAS INSTRUMENTS BA II PLUS'],
     ['BAREALESTATE', 'TEXAS INSTRUMENTS BA REAL ESTATE'],
     ['TI25STAT', 'TEXAS INSTRUMENTS TI 25 STAT'],
@@ -143,11 +140,11 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['TI30XSOLAR', 'TEXAS INSTRUMENTS TI 30XSOLAR'],
     ['TI32EXPLORERPLUS', 'TEXAS INSTRUMENTS TI 32 EXPLORER PLUS'],
     ['TI34', 'TEXAS INSTRUMENTS TI 34'],
-    ['TI34II', 'TEXAS INSTRUMENTS TI 34II'], // Original 'TI 3411' assumed 'II'
+    ['TI34II', 'TEXAS INSTRUMENTS TI 34II'],
     ['TI35X', 'TEXAS INSTRUMENTS TI 35X'],
     ['TI36XSOLAR', 'TEXAS INSTRUMENTS TI 36XSOLAR'],
 
-    // --- Page 3: Previously Approved HEWLETT PACKARD [cite: 88] ---
+    // --- Page 3: Previously Approved HEWLETT PACKARD ---
     ['HP6S', 'HP 6S'],
     ['HP6SSOLAR', 'HP 6S SOLAR'],
     ['HP8S', 'HP 8S'],
@@ -156,7 +153,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['HP10S', 'HP 10S'],
     ['HP14B', 'HP 14B'],
 
-    // --- Page 3: Previously Approved AURORA [cite: 90] ---
+    // --- Page 3: Previously Approved AURORA ---
     ['SC110', 'AURORA SC 110'],
     ['SC120', 'AURORA SC 120'],
     ['SC150', 'AURORA SC 150'],
@@ -167,31 +164,31 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['SC500', 'AURORA SC 500'],
     ['SC550', 'AURORA SC 550'],
 
-    // --- Page 4: Previously Approved FIAMO [cite: 96] ---
+    // --- Page 4: Previously Approved FIAMO ---
     ['SC6', 'FIAMO SC 6'],
     ['SC20', 'FIAMO SC 20'],
 
-    // --- Page 4: Previously Approved HOSEKI [cite: 98] ---
-    ['H1030', 'HOSEKI H 1030'], // Assuming 'Η' is 'H'
-    ['H1031', 'HOSEKI H 1031'], // Assuming 'Η' is 'H'
+    // --- Page 4: Previously Approved HOSEKI ---
+    ['H1030', 'HOSEKI H 1030'],
+    ['H1031', 'HOSEKI H 1031'],
 
-    // --- Page 4: Previously Approved HUBBLE COMPUTING [cite: 101] ---
+    // --- Page 4: Previously Approved HUBBLE COMPUTING ---
     ['SC10B', 'HUBBLE SC 10B'],
     ['SC10C', 'HUBBLE SC 10C'],
 
-    // --- Page 4: Previously Approved KARCE [cite: 103] ---
+    // --- Page 4: Previously Approved KARCE ---
     ['KC107', 'KARCE KC107'],
     ['KC108', 'KARCE KC108'],
     ['KC109', 'KARCE KC109'],
     ['KCS187', 'KARCE KC S187'],
     ['KCS3500', 'KARCE KC S3500'],
 
-    // --- Page 4: Previously Approved Graphing CASIO [cite: 108] ---
+    // --- Page 4: Previously Approved Graphing CASIO ---
     ['FX9860GSLIM', 'CASIO FX 9860G Slim'],
     ['CFX9850GCPLUS', 'CASIO CFX 9850GC PLUS'],
     ['FX9860G', 'CASIO FX 9860G'],
 
-    // --- Page 4: Previously Approved Graphing TEXAS INSTRUMENTS [cite: 110] ---
+    // --- Page 4: Previously Approved Graphing TEXAS INSTRUMENTS ---
     ['TI83PLUS', 'TEXAS INSTRUMENTS TI-83 Plus'],
     ['TI84PLUSPOCKETSE', 'TEXAS INSTRUMENTS TI-84 Plus Pocket SE'],
     ['TI84PLUSCSILVEREDITION', 'TEXAS INSTRUMENTS TI-84 Plus C Silver Edition'],
@@ -199,21 +196,23 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['TI84PLUSSILVEREDITION', 'TEXAS INSTRUMENTS TI-84 Plus Silver Edition'],
 ]);
 
-const SCAN_INTERVAL = 2000;
+// --- 2. Global Variables ---
+const SCAN_INTERVAL = 2000; // Scan every 2 seconds
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
+let tesseractWorker;
+let videoTrack; // For tap-to-focus
 
-// --- 2. Get HTML Elements ---
+// --- 3. Get HTML Elements ---
 const video = document.getElementById('video-feed');
 const overlay = document.getElementById('overlay');
 const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
 
-let tesseractWorker;
-
-// --- 3. Initialize the App ---
+// --- 4. Initialize the App ---
 async function initializeApp() {
     statusText.innerText = "Loading Tesseract.js Worker...";
     
+    // Initialize Tesseract worker
     tesseractWorker = await Tesseract.createWorker('eng', 1, {
         logger: m => {
             if (m.status === "recognizing text") {
@@ -228,13 +227,21 @@ async function initializeApp() {
     
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
+            video: { 
+                facingMode: 'environment' // Use back camera
+            }
         });
         video.srcObject = stream;
+        
+        // Store the video track for focus controls
+        videoTrack = stream.getVideoTracks()[0]; 
+        
         video.onloadedmetadata = () => {
+            // Set canvas size to match video
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
             
+            // Define the Region of Interest (ROI) box
             const boxWidth = overlay.width * 0.9;
             const boxHeight = overlay.height * 0.25;
             
@@ -243,9 +250,12 @@ async function initializeApp() {
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
-            drawOverlay(false); // Draw initial guide box
+            // Draw the initial guide box
+            drawOverlay(false); 
             
-            statusText.innerText = "Point at a calculator";
+            statusText.innerText = "Aim at calculator model number";
+            
+            // Start the scanning loop
             setInterval(performScan, SCAN_INTERVAL);
         };
     } catch (err) {
@@ -254,46 +264,46 @@ async function initializeApp() {
     }
 }
 
-// --- 4. The Scanning Function ---
+// --- 5. The Scanning Function ---
 async function performScan() {
     if (!tesseractWorker) return;
 
+    // Capture a frame from the video
     ctx.drawImage(video, 0, 0, overlay.width, overlay.height);
     const imageToScan = overlay.toDataURL('image/jpeg');
 
-    const { data } = await tesseractWorker.recognize(imageToScan, {
-        rectangle: recognitionBox
+    // Perform OCR *only* inside the recognitionBox
+    const { data } = await tesseractWorker.recognize(imageToScan, { 
+        rectangle: recognitionBox 
     });
 
+    // Process the results
     processOcrResult(data);
 }
 
-// --- 5. Process and Draw Results (ALL LOGIC IS UPDATED) ---
+// --- 6. Process and Draw Results ---
 function processOcrResult(data) {
-    // 1. Normalize the ENTIRE block of text found in the box
-    // This fulfills Request 2: We ignore the brand by default
-    // e.g., "CASIO fx-991EX" becomes "CASIOFX991EX"
+    // Normalize the entire text block found in the ROI
     const detectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
     let isApproved = false;
     let approvalMessage = "NOT APPROVED"; // Default message
     let foundWords = data.words; // Default to all words in the box
 
-    // 2. Iterate through our Map [normalizedModel, fullDisplayName]
+    // Iterate through our Map [normalizedModel, fullDisplayName]
     for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
         
-        // 3. Check if the detected text includes the normalized model
-        // e.g., does "CASIOFX991EX" include "FX991EX"? Yes.
+        // Check if the detected text includes the normalized model
+        // This ignores the brand, as requested.
         if (detectedText.includes(normalizedModel)) {
             isApproved = true;
             
-            // 4. Set the enhanced approval message (Request 3)
+            // Set the enhanced approval message (Request 3)
             approvalMessage = `${fullDisplayName} - APPROVED`;
 
-            // 5. (Optional) Filter words to only highlight the model
+            // Filter words to only highlight the model
             foundWords = data.words.filter(word => {
                 const normalizedWord = word.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
-                // Only show boxes for words that are part of the model name
                 return normalizedWord.length > 0 && normalizedModel.includes(normalizedWord);
             });
             
@@ -301,7 +311,7 @@ function processOcrResult(data) {
         }
     }
 
-    // 6. Update status text on the screen
+    // Update status text on the screen
     if (isApproved) {
         statusText.innerText = approvalMessage;
         statusText.style.color = "#00FF00"; // Green
@@ -310,20 +320,23 @@ function processOcrResult(data) {
         statusText.style.color = "#FF4136"; // Red
     }
 
-    // 7. Draw the overlay and word boxes
+    // Draw the overlay and word boxes
     drawOverlay(isApproved, foundWords);
 }
 
-// --- 6. Draw Overlay Function (No changes needed) ---
+// --- 7. Draw Overlay Function ---
 function drawOverlay(isApproved, words = []) {
+    // Clear the canvas
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-    const color = isApproved ? "#00FF00" : "#FF4136";
+    // Set the color
+    const color = isApproved ? "#00FF00" : "#FF4136"; // Green or Red
     ctx.strokeStyle = color;
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 6; // Thick line for main box
     ctx.font = '20px Arial';
     ctx.fillStyle = color;
 
+    // Draw the main "guide" box
     ctx.strokeRect(
         recognitionBox.left,
         recognitionBox.top,
@@ -331,18 +344,42 @@ function drawOverlay(isApproved, words = []) {
         recognitionBox.height
     );
 
-    ctx.lineWidth = 2;
+    // Draw the individual word boxes
+    ctx.lineWidth = 2; // Thinner lines for word boxes
     words.forEach(word => {
         const box = word.bbox;
+        
+        // Add the recognitionBox offset (coordinates are relative to the crop)
         const x = box.x0 + recognitionBox.left;
         const y = box.y0 + recognitionBox.top;
         const w = box.x1 - box.x0;
         const h = box.y1 - box.y0;
 
         ctx.strokeRect(x, y, w, h);
-        ctx.fillText(word.text, x, y > 20 ? y - 5 : y + h + 20);
+        ctx.fillText(word.text, x, y > 20 ? y - 5 : y + h + 20); // Draw text above box
     });
 }
 
-// --- 7. Start the whole thing ---
+// --- 8. Start the App ---
 initializeApp();
+
+// --- 9. NEW: Tap-to-Focus ---
+video.addEventListener('click', () => {
+    if (videoTrack && videoTrack.getCapabilities().focusMode) {
+        console.log("Re-focusing camera...");
+        
+        // Apply 'continuous' focus mode
+        videoTrack.applyConstraints({
+            advanced: [{ focusMode: 'continuous' }]
+        }).catch(e => console.error("Focus apply failed:", e));
+        
+        // Show user feedback
+        statusText.innerText = "Focusing...";
+        setTimeout(() => {
+            // Restore default text after 1 second
+            statusText.innerText = "Aim at calculator model number";
+            statusText.style.color = "#FFFFFF"; // Reset to white
+        }, 1000);
+    }
+});
+
