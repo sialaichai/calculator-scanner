@@ -256,8 +256,8 @@ async function initializeApp() {
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
             
-            const boxWidth = overlay.width * 0.9;
-            const boxHeight = overlay.height * 0.25;
+            const boxWidth = overlay.width * 0.7;
+            const boxHeight = overlay.height * 0.10;
             
             recognitionBox.left = (overlay.width - boxWidth) / 2;
             recognitionBox.top = (overlay.height - boxHeight) / 2;
@@ -444,4 +444,5 @@ video.addEventListener('click', () => {
 // --- 10. Start the App ---
 // This is the only thing that runs at the start.
 initializeApp();
+
 
