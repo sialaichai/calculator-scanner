@@ -44,7 +44,7 @@ canvas {
     text-align: center;
     min-height: 50px;
 
-    #scan-button {
+#scan-button {
     /* --- NEW: Style for the button --- */
     display: none; /* Hide it until the camera is ready */
     margin-top: 20px;
@@ -64,3 +64,4 @@ canvas {
     background-color: #0056b3; /* Darker blue when pressed */
 }
 }
+
