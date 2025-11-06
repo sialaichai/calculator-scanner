@@ -197,36 +197,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
 ]);
 
 // --- 2. Global Variables ---
-You are 100% correct, and I am so sorry. This is completely my fault.
-
-I found the error. When I fixed the typo, I made the exact same typo again. I typed recognitionSBox instead of recognitionBox. This is a careless copy-paste error on my part, and it's the entire reason the app is still crashing.
-
-My deepest apologies for the frustration. This new version fixes that typo correctly.
-
-1. Your Final, Corrected script.js File
-Please replace the entire contents of your script.js file with this code. I have triple-checked the typo, and it is now fixed.
-
-JavaScript
-
-// --- 1. Configuration ---
-
-/**
- * APPROVED_CALCULATOR_MAP
- * Key: Normalized model (all caps, no special chars)
- * Value: Full display name (Brand + Model)
- */
-const APPROVED_CALCULATOR_MAP = new Map([
-    // (Your full map of 116 calculators goes here)
-    // --- Page 2: Current Scientific ---
-    ['FX82MS', 'CASIO FX 82MS'],
-    ['FX85MS', 'CASIO FX 85MS'],
-    ['FX96SGPLUS', 'CASIO FX 96SG Plus'],
-    // ... all other models
-    ['TI84PLUSSILVEREDITION', 'TEXAS INSTRUMENTS TI-84 Plus Silver Edition'],
-]);
-
-// --- 2. Global Variables ---
-const SCAN_INTERVAL = 2000; // Scan every 2 seconds
+const SCAN_INTERVAL_MS = 2000; // Scan every 2 seconds
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
 let videoTrack; // For tap-to-focus
@@ -235,34 +206,25 @@ let videoTrack; // For tap-to-focus
 const hiddenCanvas = document.createElement('canvas');
 const hiddenCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
 
-
 // --- 3. Get HTML Elements ---
 const video = document.getElementById('video-feed');
 const overlay = document.getElementById('overlay');
 const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
 
-// --- 4. Initialize the App (FIXED) ---
-async function initializeApp() {
-    statusText.innerHTML = "<p>Loading Tesseract.js Worker...</p>";
-    
-    tesseractWorker = await Tesseract.createWorker('eng', 1, {
-        logger: m => {
-            if (m.status === "recognizing text") {
-                statusText.innerHTML = `<p>Scanning... (${Math.round(m.progress * 100)}%)</p>`;
-            } else {
-                console.log(m.status);
-            }
-        },
-    });
+// --- 4. Initialize the App ---
+// We will now run two tasks in parallel:
+// 1. Start the camera (fast)
+// 2. Load the AI (slow)
+startCamera();
+loadTesseract();
 
-    // Use whitelisting and Page Segmentation Mode 7 (single line)
-    await tesseractWorker.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-        tessedit_pageseg_mode: '7',
-    });
-
-
+/**
+ * Task 1: Start the camera immediately
+ * This gets the user's permission and shows the video feed,
+ * so the app never feels "stuck".
+ */
+async function startCamera() {
     statusText.innerHTML = "<p>Requesting Camera Access...</p>";
     
     try {
@@ -276,6 +238,7 @@ async function initializeApp() {
         video.srcObject = stream;
         videoTrack = stream.getVideoTracks()[0]; 
         
+        // This runs once the video stream starts
         video.onloadedmetadata = () => {
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
@@ -288,30 +251,60 @@ async function initializeApp() {
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
-            // Set hidden canvas size to match ROI
+            // Set hidden canvas size to match ROI (NO TYPO)
             hiddenCanvas.width = recognitionBox.width;
-            
-            // --- THIS IS THE FIX ---
-            // The typo is 100% gone now.
             hiddenCanvas.height = recognitionBox.height;
-            // --- END OF FIX ---
 
             drawOverlay([]); // Draw initial guide box
             
-            statusText.innerHTML = "<p>Aim at calculator model number</p>";
-            
-            // Start the scanning loop
-            setInterval(performScan, SCAN_INTERVAL);
+            // If Tesseract is already loaded, show this.
+            // Otherwise, the Tesseract loader will update this.
+            if (!tesseractWorker) {
+                statusText.innerHTML = "<p>Loading AI Model...</p>";
+            } else {
+                statusText.innerHTML = "<p>Aim at calculator model number</p>";
+            }
         };
     } catch (err) {
         console.error("Camera Error:", err);
-        statusText.innerHTML = "<p>Camera access denied or unavailable.</p>";
+        statusText.innerHTML = "<p>Camera access denied. Please allow camera access in your browser settings.</p>";
+    }
+}
+
+/**
+ * Task 2: Load the Tesseract worker in the background
+ */
+async function loadTesseract() {
+    tesseractWorker = await Tesseract.createWorker('eng', 1, {
+        logger: m => {
+            if (m.status === "recognizing text") {
+                statusText.innerHTML = `<p>Scanning... (${Math.round(m.progress * 100)}%)</p>`;
+            } else if (m.status === "loaded" || m.status === "initializing") {
+                statusText.innerHTML = "<p>Loading AI Model...</p>";
+            } else {
+                console.log(m.status);
+            }
+        },
+    });
+
+    // Use whitelisting and Page Segmentation Mode 7 (single line)
+    await tesseractWorker.setParameters({
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        tessedit_pageseg_mode: '7',
+    });
+
+    // AI is loaded!
+    // If the camera is already running, start the scan loop.
+    if (video.srcObject) {
+        statusText.innerHTML = "<p>Aim at calculator model number</p>";
+        setInterval(performScan, SCAN_INTERVAL_MS);
     }
 }
 
 // --- 5. The Scanning Function ---
 async function performScan() {
-    if (!tesseractWorker) return;
+    // Make sure the worker is loaded and the video is playing
+    if (!tesseractWorker || !video.srcObject) return;
 
     // 1. Draw the current video frame's ROI onto the hidden canvas
     hiddenCtx.drawImage(
@@ -417,7 +410,10 @@ function processOcrResult(data) {
         if (originalDetectedText.length > 0) {
             statusText.innerHTML = `<p style="text-align: center; color: #FF4136;">Detected: ${originalDetectedText}</p>`;
         } else {
-            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+            // Only update if the AI isn't loading
+            if (tesseractWorker) {
+                 statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+            }
         }
     }
 
@@ -453,10 +449,7 @@ function drawOverlay(words = []) {
     });
 }
 
-// --- 9. Start the App ---
-initializeApp();
-
-// --- 10. Tap-to-Focus ---
+// --- 9. Tap-to-Focus ---
 video.addEventListener('click', () => {
     if (videoTrack && videoTrack.getCapabilities().focusMode) {
         console.log("Re-focusing camera...");
@@ -467,7 +460,11 @@ video.addEventListener('click', () => {
         
         statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
         setTimeout(() => {
-            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+            if (tesseractWorker) { // Only reset if AI is loaded
+                 statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+            } else {
+                 statusText.innerHTML = "<p style='text-align: center;'>Loading AI Model...</p>";
+            }
         }, 1000);
     }
 });
