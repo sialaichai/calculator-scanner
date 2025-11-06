@@ -231,7 +231,7 @@ async function initializeApp() {
     // --- NEW: Whitelisting (Option 2) ---
     // Tell Tesseract to only look for these characters
     await tesseractWorker.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     });
     // ---
 
@@ -419,3 +419,4 @@ video.addEventListener('click', () => {
         }, 1000);
     }
 });
+
