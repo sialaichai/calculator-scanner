@@ -213,72 +213,12 @@ const overlay = document.getElementById('overlay');
 const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
 
-// --- 4. Initialize the App ---
-// We will run two tasks in parallel:
-// 1. Start the camera (fast)
-// 2. Load the AI (slow)
-startCamera();
-loadTesseract();
-
-/**
- * Task 1: Start the camera immediately
- * This gets the user's permission and shows the video feed,
- * so the app never feels "stuck".
- */
-async function startCamera() {
-    statusText.innerHTML = "<p>Requesting Camera Access...</p>";
+// --- 4. Main Initialization Function ---
+async function initializeApp() {
     
-    try {
-        const constraints = {
-            video: { 
-                facingMode: 'environment'
-            }
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
-        videoTrack = stream.getVideoTracks()[0]; 
-        
-        // This runs once the video stream starts
-        video.onloadedmetadata = () => {
-            overlay.width = video.videoWidth;
-            overlay.height = video.videoHeight;
-            
-            const boxWidth = overlay.width * 0.9;
-            const boxHeight = overlay.height * 0.25;
-            
-            recognitionBox.left = (overlay.width - boxWidth) / 2;
-            recognitionBox.top = (overlay.height - boxHeight) / 2;
-            recognitionBox.width = boxWidth;
-            recognitionBox.height = boxHeight;
-
-            // Set hidden canvas size to match ROI (NO TYPO)
-            hiddenCanvas.width = recognitionBox.width;
-            hiddenCanvas.height = recognitionBox.height;
-
-            drawOverlay([]); // Draw initial guide box
-            
-            // --- THIS IS THE FIX ---
-            if (tesseractWorker) {
-                // AI is ready, camera is ready. Start scanning.
-                statusText.innerHTML = "<p>Aim at calculator model number</p>";
-                setInterval(performScan, SCAN_INTERVAL_MS);
-            } else {
-                // Camera is ready, but AI is still loading.
-                statusText.innerHTML = "<p>Loading AI Model...</p>";
-            }
-            // --- END OF FIX ---
-        };
-    } catch (err) {
-        console.error("Camera Error:", err);
-        statusText.innerHTML = "<p>Camera access denied. Please allow camera access in your browser settings.</p>";
-    }
-}
-
-/**
- * Task 2: Load the Tesseract worker in the background
- */
-async function loadTesseract() {
+    // --- Step 1: Load the AI Model First ---
+    statusText.innerHTML = "<p>Loading AI Model (this may take a moment)...</p>";
+    
     tesseractWorker = await Tesseract.createWorker('eng', 1, {
         logger: m => {
             if (m.status === "recognizing text") {
@@ -297,15 +237,47 @@ async function loadTesseract() {
         tessedit_pageseg_mode: '7',
     });
 
-    // AI is loaded!
-    // --- THIS IS THE OTHER HALF OF THE FIX ---
-    if (video.srcObject) {
-        // Camera is already running, so start the scan loop.
-        statusText.innerHTML = "<p>Aim at calculator model number</p>";
-        setInterval(performScan, SCAN_INTERVAL_MS);
+    // --- Step 2: AI is loaded, now ask for the camera ---
+    statusText.innerHTML = "<p>Requesting Camera Access...</p>";
+    
+    try {
+        const constraints = {
+            video: { 
+                facingMode: 'environment'
+            }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        videoTrack = stream.getVideoTracks()[0]; 
+        
+        // --- Step 3: Once the camera stream starts, set up the scanner ---
+        video.onloadedmetadata = () => {
+            overlay.width = video.videoWidth;
+            overlay.height = video.videoHeight;
+            
+            const boxWidth = overlay.width * 0.9;
+            const boxHeight = overlay.height * 0.25;
+            
+            recognitionBox.left = (overlay.width - boxWidth) / 2;
+            recognitionBox.top = (overlay.height - boxHeight) / 2;
+            recognitionBox.width = boxWidth;
+            recognitionBox.height = boxHeight;
+
+            // Set hidden canvas size to match ROI (NO TYPO)
+            hiddenCanvas.width = recognitionBox.width;
+            hiddenCanvas.height = recognitionBox.height;
+
+            drawOverlay([]); // Draw initial guide box
+            
+            // --- Step 4: All loaded! Start the scanning loop ---
+            statusText.innerHTML = "<p>Aim at calculator model number</p>";
+            setInterval(performScan, SCAN_INTERVAL_MS);
+        };
+    } catch (err) {
+        console.error("Camera Error:", err);
+        statusText.innerHTML = "<p>Camera access denied. Please allow camera access in your browser settings.</p>";
     }
-    // If video is NOT ready, the 'onloadedmetadata' function will start the loop.
-    // --- END OF FIX ---
 }
 
 // --- 5. The Scanning Function ---
@@ -417,10 +389,7 @@ function processOcrResult(data) {
         if (originalDetectedText.length > 0) {
             statusText.innerHTML = `<p style="text-align: center; color: #FF4136;">Detected: ${originalDetectedText}</p>`;
         } else {
-            // Only update if the AI isn't loading
-            if (tesseractWorker) {
-                 statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
-            }
+            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
         }
     }
 
@@ -465,13 +434,13 @@ video.addEventListener('click', () => {
             advanced: [{ focusMode: 'continuous' }]
         }).catch(e => console.error("Focus apply failed:", e));
         
-        // This logic is safer and won't overwrite a loading message
-        if (tesseractWorker) {
-            statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
-            setTimeout(() => {
-                statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
-            }, 1000);
-        }
+        statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
+        setTimeout(() => {
+            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+        }, 1000);
     }
 });
 
+// --- 10. Start the App ---
+// This is the only thing that runs at the start.
+initializeApp();
