@@ -197,27 +197,25 @@ const APPROVED_CALCULATOR_MAP = new Map([
 ]);
 
 // --- 2. Global Variables ---
-const SCAN_INTERVAL = 2000; // Scan every 2 seconds
+// We no longer need SCAN_INTERVAL
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
 let videoTrack; // For tap-to-focus
 
-// --- NEW: Hidden canvas for pre-processing ---
 const hiddenCanvas = document.createElement('canvas');
 const hiddenCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
-// ---
 
 // --- 3. Get HTML Elements ---
 const video = document.getElementById('video-feed');
 const overlay = document.getElementById('overlay');
 const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
+const scanButton = document.getElementById('scan-button'); // Get the new button
 
 // --- 4. Initialize the App ---
 async function initializeApp() {
     statusText.innerText = "Loading Tesseract.js Worker...";
     
-    // Initialize Tesseract worker
     tesseractWorker = await Tesseract.createWorker('eng', 1, {
         logger: m => {
             if (m.status === "recognizing text") {
@@ -228,32 +226,35 @@ async function initializeApp() {
         },
     });
 
-    // --- NEW: Whitelisting (Option 2) ---
-    // Tell Tesseract to only look for these characters
     await tesseractWorker.setParameters({
-        tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        // --- NEW: Set Page Segmentation Mode ---
+        // '7' tells Tesseract to treat the image as a single line of text.
+        // This is MUCH more accurate for our ROI box.
+        tessedit_pageseg_mode: '7',
     });
-    // ---
 
     statusText.innerText = "Requesting Camera Access...";
     
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // --- NEW: Request higher resolution ---
+        const constraints = {
             video: { 
-                facingMode: 'environment' // Use back camera
+                facingMode: 'environment',
+                // Ask for a higher resolution from the camera
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
             }
-        });
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-        
-        // Store the video track for focus controls
         videoTrack = stream.getVideoTracks()[0]; 
         
         video.onloadedmetadata = () => {
-            // Set canvas size to match video
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
             
-            // Define the Region of Interest (ROI) box
             const boxWidth = overlay.width * 0.9;
             const boxHeight = overlay.height * 0.25;
             
@@ -262,19 +263,18 @@ async function initializeApp() {
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
-            // --- NEW: Set hidden canvas size ---
-            // Set the hidden canvas to the exact size of the ROI
             hiddenCanvas.width = recognitionBox.width;
             hiddenCanvas.height = recognitionBox.height;
-            // ---
 
-            // Draw the initial guide box
             drawOverlay(false); 
             
             statusText.innerText = "Aim at calculator model number";
             
-            // Start the scanning loop
-            setInterval(performScan, SCAN_INTERVAL);
+            // --- NEW: Show the scan button ---
+            scanButton.style.display = 'block';
+            
+            // --- REMOVED: No more setInterval! ---
+            // setInterval(performScan, SCAN_INTERVAL);
         };
     } catch (err) {
         console.error("Camera Error:", err);
@@ -282,131 +282,99 @@ async function initializeApp() {
     }
 }
 
-// --- 5. The Scanning Function (UPDATED) ---
+// --- 5. The Scanning Function (Now called by the button) ---
 async function performScan() {
     if (!tesseractWorker) return;
 
-    // --- NEW: Pre-processing (Option 1) ---
-    // 1. Draw the ROI from the video onto the *hidden* canvas, cropping it
+    // Show instant feedback that scanning has started
+    statusText.innerText = "Scanning...";
+    statusText.style.color = "#FFFFFF"; // Reset color
+
+    // 1. Pre-processing
     hiddenCtx.drawImage(
-        video, // source
-        recognitionBox.left, recognitionBox.top, // source (x, y)
-        recognitionBox.width, recognitionBox.height, // source (w, h)
-        0, 0, // destination (x, y)
-        recognitionBox.width, recognitionBox.height // destination (w, h)
+        video, 
+        recognitionBox.left, recognitionBox.top,
+        recognitionBox.width, recognitionBox.height,
+        0, 0,
+        recognitionBox.width, recognitionBox.height
     );
 
-    // 2. Apply Grayscale and Threshold
     const imageData = hiddenCtx.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height);
     const data = imageData.data;
-    const threshold = 128; // Adjust this value (0-255) as needed
+    const threshold = 128;
 
     for (let i = 0; i < data.length; i += 4) {
-        // Calculate grayscale (lightness method)
         const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        // Apply threshold (binarization)
-        const color = avg > threshold ? 255 : 0; // 255 = white, 0 = black
-        data[i] = color;     // Red
-        data[i + 1] = color; // Green
-        data[i + 2] = color; // Blue
+        const color = avg > threshold ? 255 : 0;
+        data[i] = color;
+        data[i + 1] = color;
+        data[i + 2] = color;
     }
-    // Put the "cleaned" image data back on the hidden canvas
     hiddenCtx.putImageData(imageData, 0, 0);
     
-    // 3. Get the pre-processed image to send to Tesseract
     const imageToScan = hiddenCanvas.toDataURL('image/png');
-    // ---
 
-    // 4. Perform OCR on the pre-processed image
-    // We no longer need the 'rectangle' option, as we pre-cropped it.
+    // 2. Perform OCR
     const { data: ocrData } = await tesseractWorker.recognize(imageToScan);
 
-    // 5. Process the results
+    // 3. Process the results
     processOcrResult(ocrData);
 }
 
-// --- 6. Process and Draw Results ---
-// --- 6. Process and Draw Results (UPDATED with 'Fuzzy' logic) ---
+// --- 6. Process and Draw Results (Includes "Fuzzy" logic) ---
 function processOcrResult(data) {
-    // 1. Normalize the original text
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-    // 2. --- NEW: Create a list of text variations ---
-    // Create a Set to store variations. A Set automatically handles duplicates.
     const textVariations = new Set([
-        originalDetectedText, // The original
-        
-        // B -> 8 and B -> 9
+        originalDetectedText,
         originalDetectedText.replaceAll('B', '8'),
         originalDetectedText.replaceAll('B', '9'),
-        
-        // 8 -> B and 8 -> 9
         originalDetectedText.replaceAll('8', 'B'),
         originalDetectedText.replaceAll('8', '9'),
-
-        // 9 -> B and 9 -> 8
         originalDetectedText.replaceAll('9', 'B'),
         originalDetectedText.replaceAll('9', '8')
     ]);
-    // ---
 
     let isApproved = false;
-    let approvalMessage = "NOT APPROVED"; // Default message
-    let foundWords = data.words; // Default to all words in the box
+    let approvalMessage = "NOT APPROVED";
+    let foundWords = data.words;
 
-    // 3. Loop through each text variation (e.g., "FXB91EX", "FX891EX", "FX991EX")
     for (const detectedText of textVariations) {
-        
-        // 4. Check this variation against our entire approved map
         for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
-            
-            // Check if the detected text includes the normalized model
             if (detectedText.includes(normalizedModel)) {
                 isApproved = true;
-                
-                // Set the enhanced approval message
                 approvalMessage = `${fullDisplayName} - APPROVED`;
-
-                // Filter words to only highlight the model
                 foundWords = data.words.filter(word => {
                     const normalizedWord = word.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
                     return normalizedWord.length > 0 && normalizedModel.includes(normalizedWord);
                 });
-                
-                break; // Found a match, stop checking models
+                break;
             }
         }
-        
-        if (isApproved) {
-            break; // Found a match, stop checking variations
-        }
+        if (isApproved) break;
     }
 
-    // 5. Update status text on the screen
     if (isApproved) {
         statusText.innerText = approvalMessage;
-        statusText.style.color = "#00FF00"; // Green
+        statusText.style.color = "#00FF00";
     } else {
         statusText.innerText = "NOT APPROVED";
-        statusText.style.color = "#FF4136"; // Red
+        statusText.style.color = "#FF4136";
     }
 
-    // 6. Draw the overlay and word boxes
-    drawOverlay(isApproved, foundWords);
+    // Draw the overlay
+    // We pass ocrData.words so the user sees *what was scanned*
+    drawOverlay(isApproved, ocrData.words);
 }
 
 // --- 7. Draw Overlay Function ---
 function drawOverlay(isApproved, words = []) {
-    // Clear the canvas
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-    const color = isApproved ? "#00FF00" : "#FF4136"; // Green or Red
-    ctx.strokeStyle = color;
+    // Always draw the main box
+    // This gives the user a persistent target
+    ctx.strokeStyle = "#FFFFFF"; // Draw a white guide box
     ctx.lineWidth = 6;
-    ctx.font = '20px Arial';
-    ctx.fillStyle = color;
-
-    // Draw the main "guide" box
     ctx.strokeRect(
         recognitionBox.left,
         recognitionBox.top,
@@ -414,26 +382,32 @@ function drawOverlay(isApproved, words = []) {
         recognitionBox.height
     );
 
-    // Draw the individual word boxes
+    // Now draw the word boxes if any were found
+    const color = isApproved ? "#00FF00" : "#FF4136";
+    ctx.strokeStyle = color;
     ctx.lineWidth = 2;
+    ctx.font = '20px Arial';
+    ctx.fillStyle = color;
+
     words.forEach(word => {
         const box = word.bbox;
-        
-        // Add the recognitionBox offset (coordinates are relative to the crop)
         const x = box.x0 + recognitionBox.left;
         const y = box.y0 + recognitionBox.top;
         const w = box.x1 - box.x0;
         const h = box.y1 - box.y0;
 
         ctx.strokeRect(x, y, w, h);
-        ctx.fillText(word.text, x, y > 20 ? y - 5 : y + h + 20); // Draw text above box
+        ctx.fillText(word.text, x, y > 20 ? y - 5 : y + h + 20);
     });
 }
 
 // --- 8. Start the App ---
 initializeApp();
 
-// --- 9. Tap-to-Focus ---
+// --- 9. NEW: Add Click Listeners ---
+scanButton.addEventListener('click', performScan);
+
+// We can keep tap-to-focus on the video
 video.addEventListener('click', () => {
     if (videoTrack && videoTrack.getCapabilities().focusMode) {
         console.log("Re-focusing camera...");
@@ -442,12 +416,14 @@ video.addEventListener('click', () => {
             advanced: [{ focusMode: 'continuous' }]
         }).catch(e => console.error("Focus apply failed:", e));
         
-        // Show user feedback
-        statusText.innerText = "Focusing...";
-        setTimeout(() => {
-            statusText.innerText = "Aim at calculator model number";
-            statusText.style.color = "#FFFFFF"; // Reset to white
-        }, 1000);
+        // Show user feedback but don't overwrite a result
+        if (statusText.innerText === "Aim at calculator model number") {
+            statusText.innerText = "Focusing...";
+            setTimeout(() => {
+                statusText.innerText = "Aim at calculator model number";
+                statusText.style.color = "#FFFFFF";
+            }, 1000);
+        }
     }
 });
 
