@@ -197,29 +197,29 @@ const APPROVED_CALCULATOR_MAP = new Map([
 ]);
 
 // --- 2. Global Variables ---
-// We no longer need SCAN_INTERVAL
+// --- 2. Global Variables ---
+const SCAN_INTERVAL = 2000; // Scan every 2 seconds
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
 let videoTrack; // For tap-to-focus
 
-const hiddenCanvas = document.createElement('canvas');
-const hiddenCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
+// REMOVED: Hidden canvas for pre-processing is gone
 
 // --- 3. Get HTML Elements ---
 const video = document.getElementById('video-feed');
 const overlay = document.getElementById('overlay');
 const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
-const scanButton = document.getElementById('scan-button'); // Get the new button
+// REMOVED: Scan button is gone
 
-// --- 4. Initialize the App ---
+// --- 4. Initialize the App (REVERTED) ---
 async function initializeApp() {
-    statusText.innerText = "Loading Tesseract.js Worker...";
+    statusText.innerHTML = "<p>Loading Tesseract.js Worker...</p>";
     
     tesseractWorker = await Tesseract.createWorker('eng', 1, {
         logger: m => {
             if (m.status === "recognizing text") {
-                statusText.innerText = `Scanning... (${Math.round(m.progress * 100)}%)`;
+                statusText.innerHTML = `<p>Scanning... (${Math.round(m.progress * 100)}%)</p>`;
             } else {
                 console.log(m.status);
             }
@@ -228,22 +228,16 @@ async function initializeApp() {
 
     await tesseractWorker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-        // --- NEW: Set Page Segmentation Mode ---
-        // '7' tells Tesseract to treat the image as a single line of text.
-        // This is MUCH more accurate for our ROI box.
-        tessedit_pageseg_mode: '7',
+        // REMOVED: tessedit_pageseg_mode (back to default)
     });
 
-    statusText.innerText = "Requesting Camera Access...";
+    statusText.innerHTML = "<p>Requesting Camera Access...</p>";
     
     try {
-        // --- NEW: Request higher resolution ---
+        // REVERTED: Back to standard video constraints
         const constraints = {
             video: { 
-                facingMode: 'environment',
-                // Ask for a higher resolution from the camera
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
+                facingMode: 'environment'
             }
         };
 
@@ -263,117 +257,140 @@ async function initializeApp() {
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
-            hiddenCanvas.width = recognitionBox.width;
-            hiddenCanvas.height = recognitionBox.height;
+            // REMOVED: Hidden canvas logic
 
-            drawOverlay(false); 
+            drawOverlay([]); // Draw initial guide box
             
-            statusText.innerText = "Aim at calculator model number";
+            statusText.innerHTML = "<p>Aim at calculator model number</p>";
             
-            // --- NEW: Show the scan button ---
-            scanButton.style.display = 'block';
-            
-            // --- REMOVED: No more setInterval! ---
-            // setInterval(performScan, SCAN_INTERVAL);
+            // REVERTED: Back to setInterval loop
+            setInterval(performScan, SCAN_INTERVAL);
         };
     } catch (err) {
         console.error("Camera Error:", err);
-        statusText.innerText = "Camera access denied or unavailable.";
+        statusText.innerHTML = "<p>Camera access denied or unavailable.</p>";
     }
 }
 
-// --- 5. The Scanning Function (Now called by the button) ---
+// --- 5. The Scanning Function (REVERTED) ---
 async function performScan() {
     if (!tesseractWorker) return;
 
-    // Show instant feedback that scanning has started
-    statusText.innerText = "Scanning...";
-    statusText.style.color = "#FFFFFF"; // Reset color
+    // We no longer pre-process. We just pass the video and the ROI rect.
+    // This is faster and might be more robust in your lighting.
+    const { data: ocrData } = await tesseractWorker.recognize(video, { 
+        rectangle: recognitionBox 
+    });
 
-    // 1. Pre-processing
-    hiddenCtx.drawImage(
-        video, 
-        recognitionBox.left, recognitionBox.top,
-        recognitionBox.width, recognitionBox.height,
-        0, 0,
-        recognitionBox.width, recognitionBox.height
-    );
-
-    const imageData = hiddenCtx.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height);
-    const data = imageData.data;
-    const threshold = 128;
-
-    for (let i = 0; i < data.length; i += 4) {
-        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        const color = avg > threshold ? 255 : 0;
-        data[i] = color;
-        data[i + 1] = color;
-        data[i + 2] = color;
-    }
-    hiddenCtx.putImageData(imageData, 0, 0);
-    
-    const imageToScan = hiddenCanvas.toDataURL('image/png');
-
-    // 2. Perform OCR
-    const { data: ocrData } = await tesseractWorker.recognize(imageToScan);
-
-    // 3. Process the results
+    // Process the results
     processOcrResult(ocrData);
 }
 
-// --- 6. Process and Draw Results (Includes "Fuzzy" logic) ---
+// --- 6. Levenshtein Distance Function (NEW) ---
+// This function calculates the "edit distance" between two strings
+function calculateSimilarity(s1, s2) {
+    let longer = s1;
+    let shorter = s2;
+    if (s1.length < s2.length) {
+        longer = s2;
+        shorter = s1;
+    }
+    let longerLength = longer.length;
+    if (longerLength === 0) {
+        return 100;
+    }
+    // (1 - (distance / max_length)) * 100
+    return (longerLength - editDistance(longer, shorter)) / longerLength * 100;
+}
+
+function editDistance(s1, s2) {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+    let costs = new Array();
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i == 0) {
+                costs[j] = j;
+            } else {
+                if (j > 0) {
+                    let newValue = costs[j - 1];
+                    if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                        newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                    costs[j - 1] = lastValue;
+                    lastValue = newValue;
+                }
+            }
+        }
+        if (i > 0)
+            costs[s2.length] = lastValue;
+    }
+    return costs[s2.length];
+}
+
+// --- 7. Process and Draw Results (NEW LOGIC) ---
 function processOcrResult(data) {
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
+    // Create "fuzzy" variations
     const textVariations = new Set([
         originalDetectedText,
         originalDetectedText.replaceAll('B', '8'),
-        originalDetectedText.replaceAll('B', '9'),
         originalDetectedText.replaceAll('8', 'B'),
-        originalDetectedText.replaceAll('8', '9'),
-        originalDetectedText.replaceAll('9', 'B'),
-        originalDetectedText.replaceAll('9', '8')
+        originalDetectedText.replaceAll('9', '8'),
+        // Add more common mistakes if needed
     ]);
 
-    let isApproved = false;
-    let approvalMessage = "NOT APPROVED";
-    let foundWords = data.words;
+    let matches = [];
 
+    // Loop through each text variation
     for (const detectedText of textVariations) {
+        if (detectedText.length < 3) continue; // Ignore tiny fragments
+        
+        // Check this variation against our entire approved map
         for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
-            if (detectedText.includes(normalizedModel)) {
-                isApproved = true;
-                approvalMessage = `${fullDisplayName} - APPROVED`;
-                foundWords = data.words.filter(word => {
-                    const normalizedWord = word.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
-                    return normalizedWord.length > 0 && normalizedModel.includes(normalizedWord);
+            
+            // Calculate similarity
+            const similarity = calculateSimilarity(detectedText, normalizedModel);
+
+            // If it's a good match, add it to our list
+            if (similarity > 50) {
+                matches.push({
+                    name: fullDisplayName,
+                    percent: Math.round(similarity)
                 });
-                break;
             }
         }
-        if (isApproved) break;
     }
 
-    if (isApproved) {
-        statusText.innerText = approvalMessage;
-        statusText.style.color = "#00FF00";
+    // Remove duplicate matches (e.g., FX82MS and FX82AU might both match)
+    const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
+    
+    // Sort by best match
+    uniqueMatches.sort((a, b) => b.percent - a.percent);
+
+    // --- Update UI ---
+    if (uniqueMatches.length > 0) {
+        let listHtml = "<ul>";
+        for (const match of uniqueMatches) {
+            listHtml += `<li><strong>${match.percent}%</strong> ${match.name}</li>`;
+        }
+        listHtml += "</ul>";
+        statusText.innerHTML = listHtml;
     } else {
-        statusText.innerText = "NOT APPROVED";
-        statusText.style.color = "#FF4136";
+        statusText.innerHTML = "<p>Aim at calculator model number</p>";
     }
 
-    // Draw the overlay
-    // We pass ocrData.words so the user sees *what was scanned*
-    drawOverlay(isApproved, ocrData.words);
+    // Draw the overlay (neutral colors)
+    drawOverlay(data.words);
 }
 
-// --- 7. Draw Overlay Function ---
-function drawOverlay(isApproved, words = []) {
+// --- 8. Draw Overlay Function (UPDATED) ---
+function drawOverlay(words = []) {
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-    // Always draw the main box
-    // This gives the user a persistent target
-    ctx.strokeStyle = "#FFFFFF"; // Draw a white guide box
+    // Always draw the main "guide" box in white
+    ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 6;
     ctx.strokeRect(
         recognitionBox.left,
@@ -382,32 +399,28 @@ function drawOverlay(isApproved, words = []) {
         recognitionBox.height
     );
 
-    // Now draw the word boxes if any were found
-    const color = isApproved ? "#00FF00" : "#FF4136";
-    ctx.strokeStyle = color;
+    // Draw all found word boxes in a neutral blue
+    ctx.strokeStyle = "#007aff"; // Blue
     ctx.lineWidth = 2;
     ctx.font = '20px Arial';
-    ctx.fillStyle = color;
+    ctx.fillStyle = "#007aff";
 
     words.forEach(word => {
         const box = word.bbox;
+        // Add the recognitionBox offset
         const x = box.x0 + recognitionBox.left;
         const y = box.y0 + recognitionBox.top;
         const w = box.x1 - box.x0;
         const h = box.y1 - box.y0;
 
         ctx.strokeRect(x, y, w, h);
-        ctx.fillText(word.text, x, y > 20 ? y - 5 : y + h + 20);
     });
 }
 
-// --- 8. Start the App ---
+// --- 9. Start the App ---
 initializeApp();
 
-// --- 9. NEW: Add Click Listeners ---
-scanButton.addEventListener('click', performScan);
-
-// We can keep tap-to-focus on the video
+// --- 10. Tap-to-Focus (Keep this) ---
 video.addEventListener('click', () => {
     if (videoTrack && videoTrack.getCapabilities().focusMode) {
         console.log("Re-focusing camera...");
@@ -416,15 +429,11 @@ video.addEventListener('click', () => {
             advanced: [{ focusMode: 'continuous' }]
         }).catch(e => console.error("Focus apply failed:", e));
         
-        // Show user feedback but don't overwrite a result
-        if (statusText.innerText === "Aim at calculator model number") {
-            statusText.innerText = "Focusing...";
-            setTimeout(() => {
-                statusText.innerText = "Aim at calculator model number";
-                statusText.style.color = "#FFFFFF";
-            }, 1000);
-        }
+        // Show user feedback
+        statusText.innerHTML = "<p>Focusing...</p>";
+        setTimeout(() => {
+            statusText.innerHTML = "<p>Aim at calculator model number</p>";
+        }, 1000);
     }
 });
-
 
