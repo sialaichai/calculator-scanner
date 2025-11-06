@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEAB Calculator Recognizer</title>
+    <title>Calculator Recognizer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>SEAB Calculator Recognizer</h1>
-    <div class="container">
-        <video id="video-feed" autoplay playsinline></video>
-        <canvas id="overlay"></canvas>
-    </div>
-    
-    <div id="status-text">
-        <p>Aim at calculator model number</p>
+    <div id="results-area">
+        <div id="status-text">
+            <p>Loading AI Model...</p>
+        </div>
     </div>
 
+    <div id="camera-area">
+        <div class="container">
+            <video id="video-feed" autoplay playsinline></video>
+            <canvas id="overlay"></canvas>
+            </div>
+    </div>
+    
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     
- 
-    <script src="script.js?v=1.22"></script>
-    <script src="script.js?v=1.23"></script>
+    <script src="script.js?v=1.24"></script>
+     <script src="script.js?v=1.25"></script>
 </body>
 </html>
-
-
-
-
 
 
 
