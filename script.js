@@ -233,7 +233,7 @@ async function initializeApp() {
 
     // Use whitelisting and Page Segmentation Mode 7 (single line)
     await tesseractWorker.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
         tessedit_pageseg_mode: '7',
     });
 
@@ -366,7 +366,7 @@ function processOcrResult(data) {
             
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
-            if (similarity > 50) {
+            if (similarity > 30) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -444,3 +444,4 @@ video.addEventListener('click', () => {
 // --- 10. Start the App ---
 // This is the only thing that runs at the start.
 initializeApp();
+
