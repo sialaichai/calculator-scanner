@@ -43,4 +43,24 @@ canvas {
     font-weight: bold;
     text-align: center;
     min-height: 50px;
+
+    #scan-button {
+    /* --- NEW: Style for the button --- */
+    display: none; /* Hide it until the camera is ready */
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: white;
+    background-color: #007aff; /* A blue "scan" button */
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 90%;
+    max-width: 500px;
+}
+
+#scan-button:active {
+    background-color: #0056b3; /* Darker blue when pressed */
+}
 }
