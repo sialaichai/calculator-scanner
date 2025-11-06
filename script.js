@@ -326,32 +326,63 @@ async function performScan() {
 }
 
 // --- 6. Process and Draw Results ---
+// --- 6. Process and Draw Results (UPDATED with 'Fuzzy' logic) ---
 function processOcrResult(data) {
-    // Normalize the entire text block found in the ROI
-    const detectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    // 1. Normalize the original text
+    const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    // 2. --- NEW: Create a list of text variations ---
+    // Create a Set to store variations. A Set automatically handles duplicates.
+    const textVariations = new Set([
+        originalDetectedText, // The original
+        
+        // B -> 8 and B -> 9
+        originalDetectedText.replaceAll('B', '8'),
+        originalDetectedText.replaceAll('B', '9'),
+        
+        // 8 -> B and 8 -> 9
+        originalDetectedText.replaceAll('8', 'B'),
+        originalDetectedText.replaceAll('8', '9'),
+
+        // 9 -> B and 9 -> 8
+        originalDetectedText.replaceAll('9', 'B'),
+        originalDetectedText.replaceAll('9', '8')
+    ]);
+    // ---
 
     let isApproved = false;
     let approvalMessage = "NOT APPROVED"; // Default message
     let foundWords = data.words; // Default to all words in the box
 
-    // Iterate through our Map [normalizedModel, fullDisplayName]
-    for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
+    // 3. Loop through each text variation (e.g., "FXB91EX", "FX891EX", "FX991EX")
+    for (const detectedText of textVariations) {
         
-        if (detectedText.includes(normalizedModel)) {
-            isApproved = true;
-            approvalMessage = `${fullDisplayName} - APPROVED`;
-
-            // Filter words to only highlight the model
-            foundWords = data.words.filter(word => {
-                const normalizedWord = word.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
-                return normalizedWord.length > 0 && normalizedModel.includes(normalizedWord);
-            });
+        // 4. Check this variation against our entire approved map
+        for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
             
-            break; // Found a match, stop looping
+            // Check if the detected text includes the normalized model
+            if (detectedText.includes(normalizedModel)) {
+                isApproved = true;
+                
+                // Set the enhanced approval message
+                approvalMessage = `${fullDisplayName} - APPROVED`;
+
+                // Filter words to only highlight the model
+                foundWords = data.words.filter(word => {
+                    const normalizedWord = word.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                    return normalizedWord.length > 0 && normalizedModel.includes(normalizedWord);
+                });
+                
+                break; // Found a match, stop checking models
+            }
+        }
+        
+        if (isApproved) {
+            break; // Found a match, stop checking variations
         }
     }
 
-    // Update status text on the screen
+    // 5. Update status text on the screen
     if (isApproved) {
         statusText.innerText = approvalMessage;
         statusText.style.color = "#00FF00"; // Green
@@ -360,7 +391,7 @@ function processOcrResult(data) {
         statusText.style.color = "#FF4136"; // Red
     }
 
-    // Draw the overlay and word boxes
+    // 6. Draw the overlay and word boxes
     drawOverlay(isApproved, foundWords);
 }
 
@@ -419,4 +450,5 @@ video.addEventListener('click', () => {
         }, 1000);
     }
 });
+
 
