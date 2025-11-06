@@ -197,6 +197,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
 ]);
 
 // --- 2. Global Variables ---
+// --- 2. Global Variables ---
 const SCAN_INTERVAL_MS = 2000; // Scan every 2 seconds
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
@@ -213,7 +214,7 @@ const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
 
 // --- 4. Initialize the App ---
-// We will now run two tasks in parallel:
+// We will run two tasks in parallel:
 // 1. Start the camera (fast)
 // 2. Load the AI (slow)
 startCamera();
@@ -257,13 +258,16 @@ async function startCamera() {
 
             drawOverlay([]); // Draw initial guide box
             
-            // If Tesseract is already loaded, show this.
-            // Otherwise, the Tesseract loader will update this.
-            if (!tesseractWorker) {
-                statusText.innerHTML = "<p>Loading AI Model...</p>";
-            } else {
+            // --- THIS IS THE FIX ---
+            if (tesseractWorker) {
+                // AI is ready, camera is ready. Start scanning.
                 statusText.innerHTML = "<p>Aim at calculator model number</p>";
+                setInterval(performScan, SCAN_INTERVAL_MS);
+            } else {
+                // Camera is ready, but AI is still loading.
+                statusText.innerHTML = "<p>Loading AI Model...</p>";
             }
+            // --- END OF FIX ---
         };
     } catch (err) {
         console.error("Camera Error:", err);
@@ -294,11 +298,14 @@ async function loadTesseract() {
     });
 
     // AI is loaded!
-    // If the camera is already running, start the scan loop.
+    // --- THIS IS THE OTHER HALF OF THE FIX ---
     if (video.srcObject) {
+        // Camera is already running, so start the scan loop.
         statusText.innerHTML = "<p>Aim at calculator model number</p>";
         setInterval(performScan, SCAN_INTERVAL_MS);
     }
+    // If video is NOT ready, the 'onloadedmetadata' function will start the loop.
+    // --- END OF FIX ---
 }
 
 // --- 5. The Scanning Function ---
@@ -458,13 +465,13 @@ video.addEventListener('click', () => {
             advanced: [{ focusMode: 'continuous' }]
         }).catch(e => console.error("Focus apply failed:", e));
         
-        statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
-        setTimeout(() => {
-            if (tesseractWorker) { // Only reset if AI is loaded
-                 statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
-            } else {
-                 statusText.innerHTML = "<p style='text-align: center;'>Loading AI Model...</p>";
-            }
-        }, 1000);
+        // This logic is safer and won't overwrite a loading message
+        if (tesseractWorker) {
+            statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
+            setTimeout(() => {
+                statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+            }, 1000);
+        }
     }
 });
+
