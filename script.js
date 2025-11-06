@@ -203,16 +203,18 @@ let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
 let videoTrack; // For tap-to-focus
 
-// REMOVED: Hidden canvas for pre-processing is gone
+// --- NEW: Bring back the hidden canvas for stable frame capture ---
+const hiddenCanvas = document.createElement('canvas');
+const hiddenCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
+// ---
 
 // --- 3. Get HTML Elements ---
 const video = document.getElementById('video-feed');
 const overlay = document.getElementById('overlay');
 const ctx = overlay.getContext('2d');
 const statusText = document.getElementById('status-text');
-// REMOVED: Scan button is gone
 
-// --- 4. Initialize the App (REVERTED) ---
+// --- 4. Initialize the App (UPDATED) ---
 async function initializeApp() {
     statusText.innerHTML = "<p>Loading Tesseract.js Worker...</p>";
     
@@ -226,15 +228,17 @@ async function initializeApp() {
         },
     });
 
+    // --- NEW: Re-add whitelisting and Page Segmentation Mode 7 ---
+    // This tells Tesseract to treat the ROI as a single line of text.
     await tesseractWorker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-        // REMOVED: tessedit_pageseg_mode (back to default)
+        tessedit_pageseg_mode: '7',
     });
+    // ---
 
     statusText.innerHTML = "<p>Requesting Camera Access...</p>";
     
     try {
-        // REVERTED: Back to standard video constraints
         const constraints = {
             video: { 
                 facingMode: 'environment'
@@ -257,13 +261,16 @@ async function initializeApp() {
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
-            // REMOVED: Hidden canvas logic
+            // --- NEW: Set hidden canvas size to match ROI ---
+            hiddenCanvas.width = recognitionBox.width;
+            hiddenCanvas.height = recognitionSBox.height;
+            // ---
 
             drawOverlay([]); // Draw initial guide box
             
             statusText.innerHTML = "<p>Aim at calculator model number</p>";
             
-            // REVERTED: Back to setInterval loop
+            // Start the scanning loop
             setInterval(performScan, SCAN_INTERVAL);
         };
     } catch (err) {
@@ -272,22 +279,33 @@ async function initializeApp() {
     }
 }
 
-// --- 5. The Scanning Function (REVERTED) ---
+// --- 5. The Scanning Function (UPDATED) ---
 async function performScan() {
     if (!tesseractWorker) return;
 
-    // We no longer pre-process. We just pass the video and the ROI rect.
-    // This is faster and might be more robust in your lighting.
-    const { data: ocrData } = await tesseractWorker.recognize(video, { 
-        rectangle: recognitionBox 
-    });
+    // --- NEW: Use hidden canvas for stable frame capture ---
+    // 1. Draw the current video frame's ROI onto the hidden canvas
+    hiddenCtx.drawImage(
+        video, // source
+        recognitionBox.left, recognitionBox.top, // source (x, y)
+        recognitionBox.width, recognitionBox.height, // source (w, h)
+        0, 0, // destination (x, y)
+        recognitionBox.width, recognitionBox.height // destination (w, h)
+    );
+    
+    // 2. Get the captured frame as a still image
+    const imageToScan = hiddenCanvas.toDataURL('image/png');
+    // ---
 
-    // Process the results
+    // 3. Scan the *still image* (much more reliable)
+    // We don't need the 'rectangle' option because we already cropped it.
+    const { data: ocrData } = await tesseractWorker.recognize(imageToScan);
+
+    // 4. Process the results
     processOcrResult(ocrData);
 }
 
-// --- 6. Levenshtein Distance Function (NEW) ---
-// This function calculates the "edit distance" between two strings
+// --- 6. Levenshtein Distance Function (Keep this) ---
 function calculateSimilarity(s1, s2) {
     let longer = s1;
     let shorter = s2;
@@ -299,7 +317,6 @@ function calculateSimilarity(s1, s2) {
     if (longerLength === 0) {
         return 100;
     }
-    // (1 - (distance / max_length)) * 100
     return (longerLength - editDistance(longer, shorter)) / longerLength * 100;
 }
 
@@ -328,7 +345,7 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// --- 7. Process and Draw Results (NEW LOGIC) ---
+// --- 7. Process and Draw Results (UPDATED with better feedback) ---
 function processOcrResult(data) {
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
@@ -338,6 +355,8 @@ function processOcrResult(data) {
         originalDetectedText.replaceAll('B', '8'),
         originalDetectedText.replaceAll('8', 'B'),
         originalDetectedText.replaceAll('9', '8'),
+        originalDetectedText.replaceAll('S', '5'),
+        originalDetectedText.replaceAll('5', 'S'),
         // Add more common mistakes if needed
     ]);
 
@@ -350,10 +369,8 @@ function processOcrResult(data) {
         // Check this variation against our entire approved map
         for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
             
-            // Calculate similarity
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
-            // If it's a good match, add it to our list
             if (similarity > 50) {
                 matches.push({
                     name: fullDisplayName,
@@ -363,13 +380,10 @@ function processOcrResult(data) {
         }
     }
 
-    // Remove duplicate matches (e.g., FX82MS and FX82AU might both match)
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
-    
-    // Sort by best match
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
-    // --- Update UI ---
+    // --- NEW: Better User Feedback ---
     if (uniqueMatches.length > 0) {
         let listHtml = "<ul>";
         for (const match of uniqueMatches) {
@@ -378,14 +392,20 @@ function processOcrResult(data) {
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
     } else {
-        statusText.innerHTML = "<p>Aim at calculator model number</p>";
+        // Show what was scanned, even if it's not a match!
+        if (originalDetectedText.length > 0) {
+            statusText.innerHTML = `<p style="text-align: center; color: #FF4136;">Detected: ${originalDetectedText}</p>`;
+        } else {
+            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+        }
     }
+    // ---
 
     // Draw the overlay (neutral colors)
     drawOverlay(data.words);
 }
 
-// --- 8. Draw Overlay Function (UPDATED) ---
+// --- 8. Draw Overlay Function (Keep this) ---
 function drawOverlay(words = []) {
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
@@ -408,6 +428,7 @@ function drawOverlay(words = []) {
     words.forEach(word => {
         const box = word.bbox;
         // Add the recognitionBox offset
+        // Tesseract's coordinates are relative to the *cropped image*
         const x = box.x0 + recognitionBox.left;
         const y = box.y0 + recognitionBox.top;
         const w = box.x1 - box.x0;
@@ -430,9 +451,9 @@ video.addEventListener('click', () => {
         }).catch(e => console.error("Focus apply failed:", e));
         
         // Show user feedback
-        statusText.innerHTML = "<p>Focusing...</p>";
+        statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
         setTimeout(() => {
-            statusText.innerHTML = "<p>Aim at calculator model number</p>";
+            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
         }, 1000);
     }
 });
