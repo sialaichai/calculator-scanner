@@ -271,7 +271,7 @@ async function initializeApp() {
             drawOverlay([]); // Draw initial guide box
             
             // --- Step 4: All loaded! Start the scanning loop ---
-            statusText.innerHTML = "<p>Aim at calculator model number</p>";
+            statusText.innerHTML = "<p>Aim at calculator model number in rectangle box</p>";
             setInterval(performScan, SCAN_INTERVAL_MS);
         };
     } catch (err) {
@@ -444,5 +444,6 @@ video.addEventListener('click', () => {
 // --- 10. Start the App ---
 // This is the only thing that runs at the start.
 initializeApp();
+
 
 
