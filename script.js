@@ -112,7 +112,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['EL531VH', 'SHARP EL 531VH'],
     ['ELW531M', 'SHARP EL W531M'],
     ['EL546G', 'SHARP EL 546G'],
-    ['EL546L',. 'SHARP EL 546L'],
+    ['EL546L', 'SHARP EL 546L'],
     ['EL546LV', 'SHARP EL 546LV'],
     ['EL546VA', 'SHARP EL 546VA'],
     ['EL553', 'SHARP EL 553'],
@@ -226,13 +226,13 @@ async function initializeApp() {
             }
         };
     
-        // --- THIS IS THE FIX: Load 'eng' (English) only ---
+        // --- THIS IS THE CORRECT LANGUAGE: 'eng' (English) only ---
         tesseractWorker = await Tesseract.createWorker('eng', 1, { logger });
 
         await tesseractWorker.setParameters({
             tessedit_pageseg_mode: '7',
-            // --- THIS IS THE FIX: Whitelist for calculators ---
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-',
+            // --- THIS IS THE CORRECT WHITELIST: For calculators ---
+            tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-',
         });
 
     } catch (err) {
@@ -255,8 +255,8 @@ async function initializeApp() {
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
             
-            const boxWidth = overlay.width * 0.9;
-            const boxHeight = overlay.height * 0.25;
+            const boxWidth = overlay.width * 0.7;
+            const boxHeight = overlay.height * 0.15;
             
             recognitionBox.left = (overlay.width - boxWidth) / 2;
             recognitionBox.top = (overlay.height - boxHeight) / 2;
@@ -351,7 +351,7 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// --- 7. Process and Draw Results (MODIFIED FOR BEST MATCH) ---
+// --- 7. Process and Draw Results (MODIFIED FOR SINGLE BEST MATCH) ---
 function processOcrResult(data) {
     // Use calculator normalization
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -377,7 +377,7 @@ function processOcrResult(data) {
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
             // Use includes() for a fast check, or high similarity for fuzzy check
-            if (similarity > 60 || detectedText.includes(normalizedModel)) {
+            if (similarity > 50 || detectedText.includes(normalizedModel)) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -443,26 +443,6 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
-
-// --- 9. Tap-to-Focus ---
-video.addEventListener('click', () => {
-    if (videoTrack && videoTrack.getCapabilities().focusMode) {
-        console.log("Re-focusing camera...");
-        
-        videoTrack.applyConstraints({
-            advanced: [{ focusMode: 'continuous' }]
-        }).catch(e => console.error("Focus apply failed:", e));
-        
-        statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
-        setTimeout(() => {
-            statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
-        }, 1000);
-    }
-});
-
-// --- 10. Start the App ---
-// This is the only thing that runs at the start.
-initializeApp();
 
 
 
