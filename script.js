@@ -1,4 +1,3 @@
-
 // --- 1. Configuration ---
 
 /**
@@ -256,8 +255,8 @@ async function initializeApp() {
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
             
-            const boxWidth = overlay.width * 0.7;
-            const boxHeight = overlay.height * 0.15;
+            const boxWidth = overlay.width * 0.9;
+            const boxHeight = overlay.height * 0.25;
             
             recognitionBox.left = (overlay.width - boxWidth) / 2;
             recognitionBox.top = (overlay.height - boxHeight) / 2;
@@ -378,7 +377,7 @@ function processOcrResult(data) {
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
             // Use includes() for a fast check, or high similarity for fuzzy check
-            if (similarity > 50 || detectedText.includes(normalizedModel)) {
+            if (similarity > 60 || detectedText.includes(normalizedModel)) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -390,7 +389,7 @@ function processOcrResult(data) {
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
-    // --- Display highest score model---
+    // --- THIS IS THE NEW LOGIC YOU REQUESTED ---
     if (uniqueMatches.length > 0) {
         // Get only the best match (the first item after sorting)
         const bestMatch = uniqueMatches[0];
@@ -401,7 +400,7 @@ function processOcrResult(data) {
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
     } else {
-    // --- END OF highest score ---
+    // --- END OF NEW LOGIC ---
         if (originalDetectedText.length > 0) {
             statusText.innerHTML = `<p style="text-align: center; color: #FF4136;">Detected: ${originalDetectedText}</p>`;
         } else {
@@ -444,3 +443,4 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
+
