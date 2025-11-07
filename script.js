@@ -1,10 +1,9 @@
 // --- 1. Configuration ---
 
 /**
- * APPROVED_CALCULATOR_MAP
+ * APPROVED_CALCULATOR_MAP (THIS IS THE CORRECT LIST)
  * Key: Normalized model (all caps, no special chars)
  * Value: Full display name (Brand + Model)
- * Data populated from the SEAB PDF (Updated 31st October 2024).
  */
 const APPROVED_CALCULATOR_MAP = new Map([
     // --- Page 2: Current Scientific ---
@@ -18,12 +17,10 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['HP10SPLUS', 'HP 10S+'], // HEWLETT PACKARD
     ['ELW531SII', 'SHARP EL W531S II'],
     ['ELW531SIISILVEREDITION', 'SHARP EL W531S II Silver Edition'],
-
     // --- Page 2: Current Graphing ---
     ['FX9860GILS', 'CASIO FX-9860GIls'],
     ['TI84PLUSCE', 'TEXAS INSTRUMENTS TI-84 Plus CE'],
     ['TI84PLUSCEPYTHON', 'TEXAS INSTRUMENTS TI-84 Plus CE Python'],
-
     // --- Page 3: Previously Approved CASIO ---
     ['FX82AU', 'CASIO FX 82AU'],
     ['FX82C', 'CASIO FX 82C'],
@@ -78,7 +75,6 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['FX992S', 'CASIO FX 992S'],
     ['FX992V', 'CASIO FX 992V'],
     ['FX992VB', 'CASIO FX 992VB'],
-
     // --- Page 3: Previously Approved CANON ---
     ['F200', 'CANON F 200'],
     ['F401', 'CANON F 401'],
@@ -92,7 +88,6 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['F612', 'CANON F 612'],
     ['F715S', 'CANON F 715S'],
     ['F720', 'CANON F 720'],
-
     // --- Page 3: Previously Approved SHARP ---
     ['EL506L', 'SHARP EL 506L'],
     ['EL509G', 'SHARP EL 509G'],
@@ -117,7 +112,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['EL531VH', 'SHARP EL 531VH'],
     ['ELW531M', 'SHARP EL W531M'],
     ['EL546G', 'SHARP EL 546G'],
-    ['EL546L', 'SHARP EL 546L'],
+    ['EL546L',. 'SHARP EL 546L'],
     ['EL546LV', 'SHARP EL 546LV'],
     ['EL546VA', 'SHARP EL 546VA'],
     ['EL553', 'SHARP EL 553'],
@@ -126,7 +121,6 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['ELW531S', 'SHARP EL W531S'],
     ['ELW531XM', 'SHARP EL W531XM'],
     ['EL533X', 'SHARP EL 533X'],
-
     // --- Page 3: Previously Approved TEXAS INSTRUMENTS ---
     ['BAIIPIUS', 'TEXAS INSTRUMENTS BA II PLUS'],
     ['BAREALESTATE', 'TEXAS INSTRUMENTS BA REAL ESTATE'],
@@ -143,7 +137,6 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['TI34II', 'TEXAS INSTRUMENTS TI 34II'],
     ['TI35X', 'TEXAS INSTRUMENTS TI 35X'],
     ['TI36XSOLAR', 'TEXAS INSTRUMENTS TI 36XSOLAR'],
-
     // --- Page 3: Previously Approved HEWLETT PACKARD ---
     ['HP6S', 'HP 6S'],
     ['HP6SSOLAR', 'HP 6S SOLAR'],
@@ -152,7 +145,6 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['HP10B', 'HP 10B'],
     ['HP10S', 'HP 10S'],
     ['HP14B', 'HP 14B'],
-
     // --- Page 3: Previously Approved AURORA ---
     ['SC110', 'AURORA SC 110'],
     ['SC120', 'AURORA SC 120'],
@@ -163,31 +155,25 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['SC260', 'AURORA SC 260'],
     ['SC500', 'AURORA SC 500'],
     ['SC550', 'AURORA SC 550'],
-
     // --- Page 4: Previously Approved FIAMO ---
     ['SC6', 'FIAMO SC 6'],
     ['SC20', 'FIAMO SC 20'],
-
     // --- Page 4: Previously Approved HOSEKI ---
     ['H1030', 'HOSEKI H 1030'],
     ['H1031', 'HOSEKI H 1031'],
-
     // --- Page 4: Previously Approved HUBBLE COMPUTING ---
     ['SC10B', 'HUBBLE SC 10B'],
     ['SC10C', 'HUBBLE SC 10C'],
-
     // --- Page 4: Previously Approved KARCE ---
     ['KC107', 'KARCE KC107'],
     ['KC108', 'KARCE KC108'],
     ['KC109', 'KARCE KC109'],
     ['KCS187', 'KARCE KC S187'],
     ['KCS3500', 'KARCE KC S3500'],
-
     // --- Page 4: Previously Approved Graphing CASIO ---
     ['FX9860GSLIM', 'CASIO FX 9860G Slim'],
     ['CFX9850GCPLUS', 'CASIO CFX 9850GC PLUS'],
     ['FX9860G', 'CASIO FX 9860G'],
-
     // --- Page 4: Previously Approved Graphing TEXAS INSTRUMENTS ---
     ['TI83PLUS', 'TEXAS INSTRUMENTS TI-83 Plus'],
     ['TI84PLUSPOCKETSE', 'TEXAS INSTRUMENTS TI-84 Plus Pocket SE'],
@@ -196,115 +182,136 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['TI84PLUSSILVEREDITION', 'TEXAS INSTRUMENTS TI-84 Plus Silver Edition'],
 ]);
 
+
 // --- 2. Global Variables ---
-// --- 2. Global Variables ---
-const SCAN_INTERVAL_MS = 2000; // Scan every 2 seconds
+const SCAN_INTERVAL_MS = 2000;
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
-let videoTrack; // For tap-to-focus
-
-// Hidden canvas for stable frame capture
-const hiddenCanvas = document.createElement('canvas');
-const hiddenCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
+let videoTrack;
+let hiddenCanvas;
+let hiddenCtx;
 
 // --- 3. Get HTML Elements ---
-const video = document.getElementById('video-feed');
-const overlay = document.getElementById('overlay');
-const ctx = overlay.getContext('2d');
-const statusText = document.getElementById('status-text');
+let video;
+let overlay;
+let ctx;
+let statusText;
 
-// --- 4. Main Initialization Function ---
+// --- 4. Main Initialization Function (Stable Version) ---
 async function initializeApp() {
     
-    // --- Step 1: Load the AI Model First ---
-    statusText.innerHTML = "<p>Loading AI Model (this may take a moment)...</p>";
+    // --- Step 1: Assign HTML Elements (Now safe) ---
+    video = document.getElementById('video-feed');
+    overlay = document.getElementById('overlay');
+    ctx = overlay.getContext('2d');
+    statusText = document.getElementById('status-text');
     
-    tesseractWorker = await Tesseract.createWorker('eng', 1, {
-        logger: m => {
-            if (m.status === "recognizing text") {
-                statusText.innerHTML = `<p>Scanning... (${Math.round(m.progress * 100)}%)</p>`;
-            } else if (m.status === "loaded" || m.status === "initializing") {
-                statusText.innerHTML = "<p>Loading AI Model...</p>";
-            } else {
-                console.log(m.status);
+    // Create hidden canvas
+    hiddenCanvas = document.createElement('canvas');
+    hiddenCtx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
+
+    // --- Step 2: Load the AI Model First ---
+    try {
+        const logger = (m) => {
+            let status = m.status;
+            if (status === "downloading" || status === "loading language model") {
+                status = `Loading AI Model... (${status}: ${Math.round(m.progress * 100)}%)`;
+            } else if (status === "initializing" || status === "loaded") {
+                status = "Initializing AI Model...";
+            } else if (status === "recognizing text") {
+                status = `Scanning... (${Math.round(m.progress * 100)}%)`;
             }
-        },
-    });
+            if (statusText) {
+                statusText.innerHTML = `<p>${status}</p>`;
+            }
+        };
+    
+        // --- THIS IS THE FIX: Load 'eng' (English) only ---
+        tesseractWorker = await Tesseract.createWorker('eng', 1, { logger });
 
-    // Use whitelisting and Page Segmentation Mode 7 (single line)
-    await tesseractWorker.setParameters({
-        tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-        tessedit_pageseg_mode: '7',
-    });
+        await tesseractWorker.setParameters({
+            tessedit_pageseg_mode: '7',
+            // --- THIS IS THE FIX: Whitelist for calculators ---
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-',
+        });
 
-    // --- Step 2: AI is loaded, now ask for the camera ---
+    } catch (err) {
+        console.error("Tesseract loading error:", err);
+        statusText.innerHTML = "<p>Error: Could not load AI model.</p>";
+        return; 
+    }
+
+    // --- Step 3: AI is loaded, now ask for the camera ---
     statusText.innerHTML = "<p>Requesting Camera Access...</p>";
     
     try {
-        const constraints = {
-            video: { 
-                facingMode: 'environment'
-            }
-        };
-
+        const constraints = { video: { facingMode: 'environment' } };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
         videoTrack = stream.getVideoTracks()[0]; 
         
-        // --- Step 3: Once the camera stream starts, set up the scanner ---
+        // --- Step 4: Once the camera stream starts, set up the scanner ---
         video.onloadedmetadata = () => {
             overlay.width = video.videoWidth;
             overlay.height = video.videoHeight;
             
-            const boxWidth = overlay.width * 0.7;
-            const boxHeight = overlay.height * 0.10;
+            const boxWidth = overlay.width * 0.9;
+            const boxHeight = overlay.height * 0.25;
             
             recognitionBox.left = (overlay.width - boxWidth) / 2;
             recognitionBox.top = (overlay.height - boxHeight) / 2;
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
-            // Set hidden canvas size to match ROI (NO TYPO)
             hiddenCanvas.width = recognitionBox.width;
             hiddenCanvas.height = recognitionBox.height;
 
             drawOverlay([]); // Draw initial guide box
             
-            // --- Step 4: All loaded! Start the scanning loop ---
-            statusText.innerHTML = "<p>Aim at calculator model number in rectangle box</p>";
+            // --- Step 5: All loaded! Start the scanning loop ---
+            statusText.innerHTML = "<p>Aim at calculator model number</p>";
             setInterval(performScan, SCAN_INTERVAL_MS);
         };
     } catch (err) {
         console.error("Camera Error:", err);
         statusText.innerHTML = "<p>Camera access denied. Please allow camera access in your browser settings.</p>";
     }
+
+    // --- Step 6: Add Tap-to-Focus ---
+    video.addEventListener('click', () => {
+        if (videoTrack && videoTrack.getCapabilities().focusMode) {
+            console.log("Re-focusing camera...");
+            
+            videoTrack.applyConstraints({
+                advanced: [{ focusMode: 'continuous' }]
+            }).catch(e => console.error("Focus apply failed:", e));
+            
+            statusText.innerHTML = "<p style='text-align: center;'>Focusing...</p>";
+            setTimeout(() => {
+                statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
+            }, 1000);
+        }
+    });
 }
 
 // --- 5. The Scanning Function ---
 async function performScan() {
-    // Make sure the worker is loaded and the video is playing
     if (!tesseractWorker || !video.srcObject) return;
 
-    // 1. Draw the current video frame's ROI onto the hidden canvas
     hiddenCtx.drawImage(
-        video, // source
-        recognitionBox.left, recognitionBox.top, // source (x, y)
-        recognitionBox.width, recognitionBox.height, // source (w, h)
-        0, 0, // destination (x, y)
-        recognitionBox.width, recognitionBox.height // destination (w, h)
+        video,
+        recognitionBox.left, recognitionBox.top,
+        recognitionBox.width, recognitionBox.height,
+        0, 0,
+        recognitionBox.width, recognitionBox.height
     );
     
-    // 2. Get the captured frame as a still image
     const imageToScan = hiddenCanvas.toDataURL('image/png');
-
-    // 3. Scan the *still image*
     const { data: ocrData } = await tesseractWorker.recognize(imageToScan);
-
-    // 4. Process the results
     processOcrResult(ocrData);
 }
 
-// --- 6. Levenshtein Distance Function ---
+// --- 6. Levenshtein Distance Function (Unchanged) ---
 function calculateSimilarity(s1, s2) {
     let longer = s1;
     let shorter = s2;
@@ -344,29 +351,33 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// --- 7. Process and Draw Results ---
+// --- 7. Process and Draw Results (MODIFIED FOR BEST MATCH) ---
 function processOcrResult(data) {
+    // Use calculator normalization
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
     const textVariations = new Set([
         originalDetectedText,
         originalDetectedText.replaceAll('B', '8'),
         originalDetectedText.replaceAll('8', 'B'),
-        originalDetectedText.replaceAll('9', '8'),
         originalDetectedText.replaceAll('S', '5'),
         originalDetectedText.replaceAll('5', 'S'),
+        originalDetectedText.replaceAll('I', '1'),
+        originalDetectedText.replaceAll('1', 'I'),
     ]);
 
     let matches = [];
 
     for (const detectedText of textVariations) {
-        if (detectedText.length < 3) continue;
+        if (detectedText.length < 2) continue;
         
+        // Check the correct calculator list
         for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
             
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
-            if (similarity > 50) {
+            // Use includes() for a fast check, or high similarity for fuzzy check
+            if (similarity > 60 || detectedText.includes(normalizedModel)) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -378,14 +389,18 @@ function processOcrResult(data) {
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
+    // --- THIS IS THE NEW LOGIC YOU REQUESTED ---
     if (uniqueMatches.length > 0) {
+        // Get only the best match (the first item after sorting)
+        const bestMatch = uniqueMatches[0];
+        
+        // Display only the best match
         let listHtml = "<ul>";
-        for (const match of uniqueMatches) {
-            listHtml += `<li><strong>${match.percent}%</strong> ${match.name}</li>`;
-        }
+        listHtml += `<li><strong>${bestMatch.percent}%</strong> ${bestMatch.name}</li>`;
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
     } else {
+    // --- END OF NEW LOGIC ---
         if (originalDetectedText.length > 0) {
             statusText.innerHTML = `<p style="text-align: center; color: #FF4136;">Detected: ${originalDetectedText}</p>`;
         } else {
@@ -409,7 +424,7 @@ function drawOverlay(words = []) {
         recognitionBox.height
     );
 
-    ctx.strokeStyle = "#007aff"; // Blue
+    ctx.strokeStyle = "#007aff";
     ctx.lineWidth = 2;
     ctx.font = '20px Arial';
     ctx.fillStyle = "#007aff";
@@ -424,6 +439,10 @@ function drawOverlay(words = []) {
         ctx.strokeRect(x, y, w, h);
     });
 }
+
+// --- 9. Start the App ---
+// This waits for the page to be loaded before running any code.
+window.addEventListener('DOMContentLoaded', initializeApp);
 
 // --- 9. Tap-to-Focus ---
 video.addEventListener('click', () => {
@@ -444,6 +463,7 @@ video.addEventListener('click', () => {
 // --- 10. Start the App ---
 // This is the only thing that runs at the start.
 initializeApp();
+
 
 
 
