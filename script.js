@@ -1,3 +1,4 @@
+
 // --- 1. Configuration ---
 
 /**
@@ -112,7 +113,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     ['EL531VH', 'SHARP EL 531VH'],
     ['ELW531M', 'SHARP EL W531M'],
     ['EL546G', 'SHARP EL 546G'],
-    ['EL546L', 'SHARP EL 546L'],
+    ['EL546L',. 'SHARP EL 546L'],
     ['EL546LV', 'SHARP EL 546LV'],
     ['EL546VA', 'SHARP EL 546VA'],
     ['EL553', 'SHARP EL 553'],
@@ -351,9 +352,9 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// --- 7. Process and Draw Results ---
+// --- 7. Process and Draw Results (MODIFIED FOR BEST MATCH) ---
 function processOcrResult(data) {
-    // --- THIS IS THE FIX: Use calculator normalization ---
+    // Use calculator normalization
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
     const textVariations = new Set([
@@ -362,6 +363,8 @@ function processOcrResult(data) {
         originalDetectedText.replaceAll('8', 'B'),
         originalDetectedText.replaceAll('S', '5'),
         originalDetectedText.replaceAll('5', 'S'),
+        originalDetectedText.replaceAll('I', '1'),
+        originalDetectedText.replaceAll('1', 'I'),
     ]);
 
     let matches = [];
@@ -369,13 +372,13 @@ function processOcrResult(data) {
     for (const detectedText of textVariations) {
         if (detectedText.length < 2) continue;
         
-        // --- THIS IS THE FIX: Check the correct list ---
+        // Check the correct calculator list
         for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
             
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
             // Use includes() for a fast check, or high similarity for fuzzy check
-            if (similarity > 60 || detectedText.includes(normalizedModel)) {
+            if (similarity > 50 || detectedText.includes(normalizedModel)) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -387,14 +390,18 @@ function processOcrResult(data) {
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
+    // --- Display highest score model---
     if (uniqueMatches.length > 0) {
+        // Get only the best match (the first item after sorting)
+        const bestMatch = uniqueMatches[0];
+        
+        // Display only the best match
         let listHtml = "<ul>";
-        for (const match of uniqueMatches) {
-            listHtml += `<li><strong>${match.percent}%</strong> ${match.name}</li>`;
-        }
+        listHtml += `<li><strong>${bestMatch.percent}%</strong> ${bestMatch.name}</li>`;
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
     } else {
+    // --- END OF highest score ---
         if (originalDetectedText.length > 0) {
             statusText.innerHTML = `<p style="text-align: center; color: #FF4136;">Detected: ${originalDetectedText}</p>`;
         } else {
@@ -437,5 +444,3 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
-
-
