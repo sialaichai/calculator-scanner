@@ -78,7 +78,7 @@ canvas {
 /* --- MODIFIED FOR BEST MATCH --- */
 #status-text li {
     font-family: monospace;
-    font-size: 1.3em; /* Make the result bigger */
+    font-size: 1.5em; /* Make the result bigger */
     color: #00FF00;
     padding: 10px 0; /* Add more padding */
     text-align: center; /* Center the single line */
@@ -91,3 +91,4 @@ canvas {
     display: inline-block;
 }
 /* --- END OF MODIFIED BLOCK --- */
+
