@@ -366,7 +366,7 @@ function processOcrResult(data) {
             
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
-            if (similarity > 30) {
+            if (similarity > 50) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -444,6 +444,7 @@ video.addEventListener('click', () => {
 // --- 10. Start the App ---
 // This is the only thing that runs at the start.
 initializeApp();
+
 
 
 
