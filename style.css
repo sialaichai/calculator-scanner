@@ -1,47 +1,39 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
-    /* --- NEW: Stack the results and camera vertically --- */
     flex-direction: column;
     height: 100vh;
     margin: 0;
     background-color: #121212;
     color: white;
-    /* Remove old justify/align */
 }
 
-/* --- REMOVED: The <h1> is gone --- */
-
-/* --- NEW: Style for the top results area --- */
 #results-area {
-    flex: 0 1 30%; /* 30% height, won't grow, can shrink */
+    flex: 0 1 30%; /* 30% height */
     width: 100%;
     padding: 10px;
-    box-sizing: border-box; /* Include padding in height */
+    box-sizing: border-box; 
     background-color: #121212;
-    overflow-y: auto; /* Allow results to scroll */
+    overflow-y: auto;
 }
 
-/* --- NEW: Style for the bottom camera area --- */
 #camera-area {
-    flex: 1 1 70%; /* 70% height, will grow and shrink */
+    flex: 1 1 70%; /* 70% height */
     width: 100%;
     position: relative;
-    background-color: #000; /* Black background for camera */
+    background-color: #000;
 }
 
-/* --- UPDATED: Container now fills the camera area --- */
 .container {
     position: relative;
     width: 100%;
     height: 100%;
-    /* border/radius is gone */
 }
 
 video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Make video fill the container */
+    object-fit: cover;
     display: block;
 }
 
@@ -53,9 +45,8 @@ canvas {
     height: 100%;
 }
 
-/* --- UPDATED: Status text is now simpler --- */
+/* --- UPDATED: This will center the single result --- */
 #status-text {
-    /* All the old absolute positioning is gone */
     font-size: 1em;
     font-weight: bold;
     text-align: left;
@@ -66,28 +57,38 @@ canvas {
     border-radius: 8px;
     padding: 10px;
     box-sizing: border-box;
+    /* Center the text/list vertically */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-/* --- (Keep the list/paragraph styles) --- */
 #status-text p {
     margin: 0;
     text-align: center;
+    font-size: 1.2em; /* Make placeholder text a bit bigger */
 }
+
 #status-text ul {
     list-style-type: none;
     padding-left: 0;
     margin: 0;
 }
+
+/* --- MODIFIED FOR BEST MATCH --- */
 #status-text li {
     font-family: monospace;
-    font-size: 1.1em;
+    font-size: 1.3em; /* Make the result bigger */
     color: #00FF00;
-    padding: 4px 0;
-}
-#status-text li strong {
-    color: #FFFFFF;
-    min-width: 50px;
-    display: inline-block;
+    padding: 10px 0; /* Add more padding */
+    text-align: center; /* Center the single line */
+    line-height: 1.4;
 }
 
+#status-text li strong {
+    color: #FFFFFF;
+    min-width: 60px; /* A bit wider */
+    display: inline-block;
+}
+/* --- END OF MODIFIED BLOCK --- */
 
