@@ -92,3 +92,21 @@ canvas {
 }
 /* --- END OF MODIFIED BLOCK --- */
 
+/* --- ADD THIS BLOCK TO FIX THE BUTTON --- */
+.link-button {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10; /* Ensures it's on top of the video */
+    
+    background-color: #007aff; /* A blue color used in your script */
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
