@@ -9,7 +9,7 @@ body {
 }
 
 #results-area {
-    flex: 0 1 30%; /* 30% height */
+    flex: 0 1 20%; /* 30% height */
     width: 100%;
     padding: 10px;
     box-sizing: border-box; 
@@ -91,5 +91,6 @@ canvas {
     display: inline-block;
 }
 /* --- END OF MODIFIED BLOCK --- */
+
 
 
