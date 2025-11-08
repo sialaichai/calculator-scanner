@@ -17,26 +17,17 @@ body {
     overflow-y: auto;
 }
 
-/* --- MODIFIED --- */
 #camera-area {
     flex: 1 1 70%; /* 70% height */
     width: 100%;
     position: relative;
     background-color: #000;
-    
-    /* Make this a column flexbox */
-    display: flex;
-    flex-direction: column;
 }
 
-/* --- MODIFIED --- */
 .container {
     position: relative;
     width: 100%;
-    /* This item will grow and shrink to fill available space */
-    flex: 1 1 auto;
-    /* This is a flexbox trick to prevent overflow */
-    min-height: 0; 
+    height: 100%;
 }
 
 video {
@@ -54,7 +45,7 @@ canvas {
     height: 100%;
 }
 
-/* Style for the single best match */
+/* --- UPDATED: This will center the single result --- */
 #status-text {
     font-size: 1em;
     font-weight: bold;
@@ -66,6 +57,7 @@ canvas {
     border-radius: 8px;
     padding: 10px;
     box-sizing: border-box;
+    /* Center the text/list vertically */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -74,7 +66,7 @@ canvas {
 #status-text p {
     margin: 0;
     text-align: center;
-    font-size: 1.2em;
+    font-size: 1.2em; /* Make placeholder text a bit bigger */
 }
 
 #status-text ul {
@@ -83,47 +75,21 @@ canvas {
     margin: 0;
 }
 
+/* --- MODIFIED FOR BEST MATCH --- */
 #status-text li {
     font-family: monospace;
-    font-size: 1.3em;
+    font-size: 1.3em; /* Make the result bigger */
     color: #00FF00;
-    padding: 10px 0;
-    text-align: center;
+    padding: 10px 0; /* Add more padding */
+    text-align: center; /* Center the single line */
     line-height: 1.4;
 }
 
 #status-text li strong {
     color: #FFFFFF;
-    min-width: 60px;
+    min-width: 60px; /* A bit wider */
     display: inline-block;
 }
-
-/* --- MODIFIED --- */
-.link-button {
-    display: block;
-    padding: 15px;
-    /* Center it horizontally */
-    margin: 10px auto; 
-    width: 85%;
-    max-width: 480px;
-    
-    background-color: #007aff;
-    color: white;
-    text-decoration: none;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.1em;
-    border-radius: 8px;
-    
-    /* This item will not grow or shrink */
-    flex-shrink: 0;
-}
-
-.link-button:hover, .link-button:active {
-    background-color: #0056b3;
-}
-
-
-
+/* --- END OF MODIFIED BLOCK --- */
 
 
