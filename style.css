@@ -45,7 +45,7 @@ canvas {
     height: 100%;
 }
 
-/* --- UPDATED: This will center the single result --- */
+/* This is your correct style for the single best match */
 #status-text {
     font-size: 1em;
     font-weight: bold;
@@ -57,7 +57,6 @@ canvas {
     border-radius: 8px;
     padding: 10px;
     box-sizing: border-box;
-    /* Center the text/list vertically */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -66,7 +65,7 @@ canvas {
 #status-text p {
     margin: 0;
     text-align: center;
-    font-size: 1.2em; /* Make placeholder text a bit bigger */
+    font-size: 1.2em;
 }
 
 #status-text ul {
@@ -75,21 +74,42 @@ canvas {
     margin: 0;
 }
 
-/* --- MODIFIED FOR BEST MATCH --- */
 #status-text li {
     font-family: monospace;
-    font-size: 1.9em; /* Make the result bigger */
+    font-size: 1.3em;
     color: #00FF00;
-    padding: 10px 0; /* Add more padding */
-    text-align: center; /* Center the single line */
+    padding: 10px 0;
+    text-align: center;
     line-height: 1.4;
 }
 
 #status-text li strong {
     color: #FFFFFF;
-    min-width: 60px; /* A bit wider */
+    min-width: 60px;
     display: inline-block;
 }
-/* --- END OF MODIFIED BLOCK --- */
 
+/* --- NEW STYLE FOR LINK BUTTON --- */
+.link-button {
+    display: block; /* Make it a block element */
+    padding: 15px;
+    margin: 10px auto; /* Center it horizontally, add space */
+    width: 85%;
+    max-width: 480px; /* Align with general page width */
+    
+    background-color: #007aff;
+    color: white;
+    text-decoration: none; /* Remove underline */
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1em;
+    border-radius: 8px;
+    
+    /* This makes it a flex-item that doesn't grow or shrink */
+    flex-shrink: 0;
+}
+
+.link-button:hover, .link-button:active {
+    background-color: #0056b3; /* Darker blue on hover/click */
+}
 
