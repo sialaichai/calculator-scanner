@@ -19,7 +19,7 @@ body {
 
 /* --- MODIFIED --- */
 #camera-area {
-    flex: 1 1 70%; /* 70% height */
+    flex: 1 1 50%; /* 70% height */
     width: 100%;
     position: relative;
     background-color: #000;
@@ -122,5 +122,6 @@ canvas {
 .link-button:hover, .link-button:active {
     background-color: #0056b3;
 }
+
 
 
