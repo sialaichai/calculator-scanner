@@ -93,9 +93,10 @@ canvas {
 /* --- END OF MODIFIED BLOCK --- */
 
 /* --- ADD THIS BLOCK TO FIX THE BUTTON --- */
+/* --- UPDATED BUTTON POSITION --- */
 .link-button {
     position: absolute;
-    bottom: 25px;
+    bottom: 15%; /* Moved up from 25px to 15% */
     left: 50%;
     transform: translateX(-50%);
     z-index: 10; /* Ensures it's on top of the video */
