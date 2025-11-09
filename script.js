@@ -190,7 +190,9 @@ let tesseractWorker;
 let videoTrack;
 let hiddenCanvas;
 let hiddenCtx;
+const PAUSED_SCAN_INTERVAL_MS = 5000; // 5-second pause when a match is found
 
+// ...
 // --- 3. Get HTML Elements ---
 let video;
 let overlay;
@@ -268,9 +270,10 @@ async function initializeApp() {
 
             drawOverlay([]); // Draw initial guide box
             
-            // --- Step 5: All loaded! Start the scanning loop ---
+        // --- Step 5: All loaded! Start the scanning loop ---
             statusText.innerHTML = "<p>Aim at calculator model number</p>";
-            setInterval(performScan, SCAN_INTERVAL_MS);
+            // Start the first scan
+            setTimeout(performScan, SCAN_INTERVAL_MS);
         };
     } catch (err) {
         console.error("Camera Error:", err);
@@ -308,7 +311,13 @@ async function performScan() {
     
     const imageToScan = hiddenCanvas.toDataURL('image/png');
     const { data: ocrData } = await tesseractWorker.recognize(imageToScan);
-    processOcrResult(ocrData);
+    
+    // Check if a match was found
+    const matchFound = processOcrResult(ocrData);
+    
+    // Schedule the next scan based on the result
+    const nextScanDelay = matchFound ? PAUSED_SCAN_INTERVAL_MS : SCAN_INTERVAL_MS;
+    setTimeout(performScan, nextScanDelay);
 }
 
 // --- 6. Levenshtein Distance Function (Unchanged) ---
@@ -356,40 +365,14 @@ function processOcrResult(data) {
     // Use calculator normalization
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-    const textVariations = new Set([
-        originalDetectedText,
-        originalDetectedText.replaceAll('B', '8'),
-        originalDetectedText.replaceAll('8', 'B'),
-        originalDetectedText.replaceAll('S', '5'),
-        originalDetectedText.replaceAll('5', 'S'),
-        originalDetectedText.replaceAll('I', '1'),
-        originalDetectedText.replaceAll('1', 'I'),
-    ]);
-
-    let matches = [];
-
-    for (const detectedText of textVariations) {
-        if (detectedText.length < 2) continue;
-        
-        // Check the correct calculator list
-        for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
-            
-            const similarity = calculateSimilarity(detectedText, normalizedModel);
-
-            // Use includes() for a fast check, or high similarity for fuzzy check
-            if (similarity > 40 || detectedText.includes(normalizedModel)) {
-                matches.push({
-                    name: fullDisplayName,
-                    percent: Math.round(similarity)
-                });
-            }
-        }
-    }
+    // ... (rest of the textVariations and matches logic) ...
 
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
-  // --- THIS IS THE NEW LOGIC (TOP 3) ---
+    let matchFound = false; // <-- ADD THIS
+
+    // --- THIS IS THE NEW LOGIC (TOP 2) ---
     if (uniqueMatches.length > 0) {
         // Get the top 2 matches (or just 1 if only 1 exists)
         const topMatches = uniqueMatches.slice(0, 2);
@@ -401,6 +384,7 @@ function processOcrResult(data) {
         }
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
+        matchFound = true; // <-- ADD THIS
     } else {
     // --- END OF NEW LOGIC ---
         if (originalDetectedText.length > 0) {
@@ -408,9 +392,11 @@ function processOcrResult(data) {
         } else {
             statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
         }
+        matchFound = false; // <-- ADD THIS
     }
 
     drawOverlay(data.words);
+    return matchFound; // <-- ADD THIS AT THE VERY END
 }
 
 // --- 8. Draw Overlay Function ---
@@ -445,6 +431,7 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
+
 
 
 
