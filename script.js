@@ -9,7 +9,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     // --- Page 2: Current Scientific ---
     ['FX82MS', 'CASIO FX 82MS'],
     ['FX85MS', 'CASIO FX 85MS'],
-    ['CALCULATOR FX95MS', 'CASIO FX 95MS'],
+    ['FX95MS', 'CASIO FX 95MS'],
     ['FX96SGPLUS', 'CASIO FX 96SG Plus'],
     ['FX97SGX', 'CASIO FX 97SG X'],
     ['FX350MS', 'CASIO FX 350MS'],
@@ -185,14 +185,13 @@ const APPROVED_CALCULATOR_MAP = new Map([
 
 // --- 2. Global Variables ---
 const SCAN_INTERVAL_MS = 2000;
+const PAUSED_SCAN_INTERVAL_MS = 5000; // 5-second pause when a match is found
 let recognitionBox = { left: 0, top: 0, width: 0, height: 0 };
 let tesseractWorker;
 let videoTrack;
 let hiddenCanvas;
 let hiddenCtx;
-const PAUSED_SCAN_INTERVAL_MS = 5000; // 5-second pause when a match is found
 
-// ...
 // --- 3. Get HTML Elements ---
 let video;
 let overlay;
@@ -258,10 +257,11 @@ async function initializeApp() {
             overlay.height = video.videoHeight;
             
             const boxWidth = overlay.width * 0.7;
-            const boxHeight = overlay.height * 0.10;
+            const boxHeight = overlay.height * 0.15;
             
             recognitionBox.left = (overlay.width - boxWidth) / 2;
-            recognitionBox.top = (overlay.height - boxHeight) / 3;
+            // --- MODIFIED: MOVED BOX HIGHER ---
+            recognitionBox.top = (overlay.height - boxHeight) / 2.5; 
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
@@ -270,9 +270,9 @@ async function initializeApp() {
 
             drawOverlay([]); // Draw initial guide box
             
-        // --- Step 5: All loaded! Start the scanning loop ---
+            // --- Step 5: All loaded! Start the scanning loop ---
             statusText.innerHTML = "<p>Aim at calculator model number</p>";
-            // Start the first scan
+            // --- MODIFIED: Changed from setInterval to setTimeout to start the loop ---
             setTimeout(performScan, SCAN_INTERVAL_MS);
         };
     } catch (err) {
@@ -298,6 +298,7 @@ async function initializeApp() {
 }
 
 // --- 5. The Scanning Function ---
+// --- MODIFIED: This function now schedules the next scan ---
 async function performScan() {
     if (!tesseractWorker || !video.srcObject) return;
 
@@ -360,19 +361,47 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// --- 7. Process and Draw Results (MODIFIED FOR SINGLE BEST MATCH) ---
+// --- 7. Process and Draw Results (MODIFIED FOR TOP 2 & PAUSE) ---
 function processOcrResult(data) {
     // Use calculator normalization
     const originalDetectedText = data.text.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-    // ... (rest of the textVariations and matches logic) ...
+    const textVariations = new Set([
+        originalDetectedText,
+        originalDetectedText.replaceAll('B', '8'),
+        originalDetectedText.replaceAll('8', 'B'),
+        originalDetectedText.replaceAll('S', '5'),
+        originalDetectedText.replaceAll('5', 'S'),
+        originalDetectedText.replaceAll('I', '1'),
+        originalDetectedText.replaceAll('1', 'I'),
+    ]);
+
+    let matches = [];
+
+    for (const detectedText of textVariations) {
+        if (detectedText.length < 2) continue;
+        
+        // Check the correct calculator list
+        for (const [normalizedModel, fullDisplayName] of APPROVED_CALCULATOR_MAP) {
+            
+            const similarity = calculateSimilarity(detectedText, normalizedModel);
+
+            // Use includes() for a fast check, or high similarity for fuzzy check
+            if (similarity > 50 || detectedText.includes(normalizedModel)) {
+                matches.push({
+                    name: fullDisplayName,
+                    percent: Math.round(similarity)
+                });
+            }
+        }
+    }
 
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
-    let matchFound = false; // <-- ADD THIS
+    let matchFound = false; // --- MODIFIED: Added for pause logic ---
 
-    // --- THIS IS THE NEW LOGIC (TOP 2) ---
+    // --- MODIFIED: THIS IS THE NEW LOGIC (TOP 2) ---
     if (uniqueMatches.length > 0) {
         // Get the top 2 matches (or just 1 if only 1 exists)
         const topMatches = uniqueMatches.slice(0, 2);
@@ -384,7 +413,7 @@ function processOcrResult(data) {
         }
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
-        matchFound = true; // <-- ADD THIS
+        matchFound = true; // --- MODIFIED: Added for pause logic ---
     } else {
     // --- END OF NEW LOGIC ---
         if (originalDetectedText.length > 0) {
@@ -392,11 +421,11 @@ function processOcrResult(data) {
         } else {
             statusText.innerHTML = "<p style='text-align: center;'>Aim at calculator model number</p>";
         }
-        matchFound = false; // <-- ADD THIS
+        matchFound = false; // --- MODIFIED: Added for pause logic ---
     }
 
     drawOverlay(data.words);
-    return matchFound; // <-- ADD THIS AT THE VERY END
+    return matchFound; // --- MODIFIED: Added for pause logic ---
 }
 
 // --- 8. Draw Overlay Function ---
@@ -431,11 +460,6 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
-
-
-
-
-
 
 
 
