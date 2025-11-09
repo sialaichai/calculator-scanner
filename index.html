@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Item Recognizer</title>
-    <link rel="stylesheet" href="style.css?v=1.0">
-
-    <!-- Add these tags to prevent caching -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <!-- End of tags to prevent caching -->
-    
+    <link rel="stylesheet" href="style.css?v=1.1">
 </head>
 <body>
+    <div id="header-area">
+        <h1>SEAB Calculator Model Detector</h1>
+        <p class="update-instruction">Delete browsing data for latest update</p>
+    </div>
     <div id="results-area">
         <div id="status-text">
             <p>Waiting for page to load...</p>
@@ -26,18 +23,14 @@
             <canvas id="overlay"></canvas>
         </div>
         
-        <a href="https://sialaichai.github.io/calculator-image/" class="link-button">Swith to Image Scan</a>
+        <a href="https://sialaichai.github.io/calculator-image/" class="link-button">Image Scan</a>
     </div>
     
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     
-    <script src="script.js?v=1.778"></script>
+    <script src="script.js?v=1.80"></script>
 </body>
 </html>
-
-
-
-
 
 
 
