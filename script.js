@@ -377,7 +377,7 @@ function processOcrResult(data) {
             const similarity = calculateSimilarity(detectedText, normalizedModel);
 
             // Use includes() for a fast check, or high similarity for fuzzy check
-            if (similarity > 50 || detectedText.includes(normalizedModel)) {
+            if (similarity > 40 || detectedText.includes(normalizedModel)) {
                 matches.push({
                     name: fullDisplayName,
                     percent: Math.round(similarity)
@@ -443,6 +443,7 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
+
 
 
 
