@@ -389,16 +389,14 @@ function processOcrResult(data) {
     const uniqueMatches = [...new Map(matches.map(m => [m.name, m])).values()];
     uniqueMatches.sort((a, b) => b.percent - a.percent);
 
-    // --- THIS IS THE NEW LOGIC (TOP 2) ---
+    // --- THIS IS THE NEW LOGIC YOU REQUESTED ---
     if (uniqueMatches.length > 0) {
-        // Get the top 2 matches (or just 1 if only 1 exists)
-        const topMatches = uniqueMatches.slice(0, 2);
+        // Get only the best match (the first item after sorting)
+        const bestMatch = uniqueMatches[0];
         
-        // Loop through the top matches and build the list
+        // Display only the best match
         let listHtml = "<ul>";
-        for (const match of topMatches) {
-            listHtml += `<li><strong>${match.percent}%</strong> ${match.name}</li>`;
-        }
+        listHtml += `<li><strong>${bestMatch.percent}%</strong> ${bestMatch.name}</li>`;
         listHtml += "</ul>";
         statusText.innerHTML = listHtml;
     } else {
@@ -445,6 +443,7 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
+
 
 
 
