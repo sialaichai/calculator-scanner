@@ -392,7 +392,7 @@ function processOcrResult(data) {
   // --- THIS IS THE NEW LOGIC (TOP 3) ---
     if (uniqueMatches.length > 0) {
         // Get the top 2 matches (or just 1 if only 1 exists)
-        const topMatches = uniqueMatches.slice(0, 3);
+        const topMatches = uniqueMatches.slice(0, 2);
         
         // Loop through the top matches and build the list
         let listHtml = "<ul>";
@@ -445,6 +445,7 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
+
 
 
 
