@@ -9,7 +9,7 @@ const APPROVED_CALCULATOR_MAP = new Map([
     // --- Page 2: Current Scientific ---
     ['FX82MS', 'CASIO FX 82MS'],
     ['FX85MS', 'CASIO FX 85MS'],
-    ['FX95MS', 'CASIO FX 95MS'],
+    ['CALCULATORFX95MS', 'CASIO FX 95MS'],
     ['FX96SGPLUS', 'CASIO FX 96SG Plus'],
     ['FX97SGX', 'CASIO FX 97SG X'],
     ['FX350MS', 'CASIO FX 350MS'],
@@ -261,7 +261,7 @@ async function initializeApp() {
             
             recognitionBox.left = (overlay.width - boxWidth) / 2;
             // --- MODIFIED: MOVED BOX HIGHER ---
-            recognitionBox.top = (overlay.height - boxHeight) / 2.5; 
+            recognitionBox.top = (overlay.height - boxHeight) / 3; 
             recognitionBox.width = boxWidth;
             recognitionBox.height = boxHeight;
 
@@ -460,6 +460,7 @@ function drawOverlay(words = []) {
 // --- 9. Start the App ---
 // This waits for the page to be loaded before running any code.
 window.addEventListener('DOMContentLoaded', initializeApp);
+
 
 
 
